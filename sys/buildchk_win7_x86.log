@@ -1,0 +1,5 @@
+BUILD: Computing Include file dependencies:
+BUILD: Examining c:\development\projects\dokaix\sys directory for files to compile.
+oacr invalidate root:x86chk /autocleanqueue
+1>Compiling and Linking c:\development\projects\dokaix\sys *************
+1>'nmake.exe /nologo BUILDMSG=Stop. -i BUILD_PASS=PASS2 LINKONLY=1 NOPASS0=1 MAKEDIR_RELATIVE_TO_BASEDIR='

@@ -1,0 +1,5 @@
+*.suo
+*.vcxproj.*
+*.sdf
+*/obj*
+*.opensdf

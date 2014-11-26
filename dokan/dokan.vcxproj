@@ -1,0 +1,145 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{26D56C43-F35D-4683-B685-0C29CEBFEB24}</ProjectGuid>
+    <Keyword>MakeFileProj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <NMakeBuildCommandLine>call $(WDKPATH)\bin\setenv.bat $(WDKPATH) chk win7
+cd /d C:\Development\Projects\dokAIX\dokan
+build</NMakeBuildCommandLine>
+    <NMakeCleanCommandLine>rmdir /s /q C:\Development\Projects\dokAIX\dokan\objchk_win7_x86</NMakeCleanCommandLine>
+    <NMakeReBuildCommandLine>rmdir /s /q C:\Development\Projects\dokAIX\dokan\objchk_win7_x86
+call $(WDKPATH)\bin\setenv.bat $(WDKPATH) chk win7
+cd /d C:\Development\Projects\dokAIX\dokan
+build</NMakeReBuildCommandLine>
+    <IntDir>C:\Development\Projects\dokAIX\dokan\objchk_win7_x86</IntDir>
+    <OutDir>C:\Development\Projects\dokAIX\dokan\objchk_win7_x86</OutDir>
+    <NMakeOutput>C:\Development\Projects\dokAIX\dokan\objchk_win7_x86\i386\dokan.sys</NMakeOutput>
+    <NMakePreprocessorDefinitions>WIN32;_CONSOLE;_X86_;_DDK_;_DEBUG;DBG=1;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(WDKPATH)\inc\ddk;$(WDKPATH)\inc\api;$(WDKPATH)\inc\crt;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <NMakeBuildCommandLine>call $(WDKPATH)\bin\setenv.bat $(WDKPATH) fre win7
+cd /d C:\Development\Projects\dokAIX\dokan
+build</NMakeBuildCommandLine>
+    <NMakeCleanCommandLine>rmdir /s /q C:\Development\Projects\dokAIX\dokan\objfre_win7_x86</NMakeCleanCommandLine>
+    <NMakeReBuildCommandLine>rmdir /s /q C:\Development\Projects\dokAIX\dokan\objfre_win7_x86
+call $(WDKPATH)\bin\setenv.bat $(WDKPATH) fre win7
+cd /d C:\Development\Projects\dokAIX\dokan
+build</NMakeReBuildCommandLine>
+    <IntDir>C:\Development\Projects\dokAIX\dokan\objfre_win7_x86</IntDir>
+    <OutDir>C:\Development\Projects\dokAIX\dokan\objfre_win7_x86</OutDir>
+    <NMakeOutput>C:\Development\Projects\dokAIX\dokan\objfre_win7_x86\i386\dokan.sys</NMakeOutput>
+    <NMakePreprocessorDefinitions>WIN32;_CONSOLE;_X86_;_DDK_;_NDEBUG;DBG=0;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(WDKPATH)\inc\ddk;$(WDKPATH)\inc\api;$(WDKPATH)\inc\crt;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <NMakeBuildCommandLine>call $(WDKPATH)\bin\setenv.bat $(WDKPATH) chk AMD64 win7
+cd /d C:\Development\Projects\dokAIX\dokan
+build</NMakeBuildCommandLine>
+    <NMakeCleanCommandLine>rmdir /s /q C:\Development\Projects\dokAIX\dokan\objchk_win7_amd64</NMakeCleanCommandLine>
+    <NMakeReBuildCommandLine>rmdir /s /q C:\Development\Projects\dokAIX\dokan\objchk_win7_amd64
+call $(WDKPATH)\bin\setenv.bat $(WDKPATH) chk AMD64 win7
+cd /d C:\Development\Projects\dokAIX\dokan
+build</NMakeReBuildCommandLine>
+    <IntDir>C:\Development\Projects\dokAIX\dokan\objchk_win7_amd64</IntDir>
+    <OutDir>C:\Development\Projects\dokAIX\dokan\objchk_win7_amd64</OutDir>
+    <NMakeOutput>C:\Development\Projects\dokAIX\dokan\objchk_win7_amd64\amd64\dokan.sys</NMakeOutput>
+    <NMakePreprocessorDefinitions>WIN32;_CONSOLE;_AMD64_;_DDK_;_DEBUG;DBG=1;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(WDKPATH)\inc\ddk;$(WDKPATH)\inc\api;$(WDKPATH)\inc\crt;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <NMakeBuildCommandLine>call $(WDKPATH)\bin\setenv.bat $(WDKPATH) fre AMD64 win7
+cd /d C:\Development\Projects\dokAIX\dokan
+build</NMakeBuildCommandLine>
+    <NMakeCleanCommandLine>rmdir /s /q C:\Development\Projects\dokAIX\dokan\objfre_win7_amd64</NMakeCleanCommandLine>
+    <NMakeReBuildCommandLine>rmdir /s /q C:\Development\Projects\dokAIX\dokan\objfre_win7_amd64
+call $(WDKPATH)\bin\setenv.bat $(WDKPATH) fre AMD64 win7
+cd /d C:\Development\Projects\dokAIX\dokan
+build</NMakeReBuildCommandLine>
+    <IntDir>C:\Development\Projects\dokAIX\dokan\objfre_win7_amd64</IntDir>
+    <OutDir>C:\Development\Projects\dokAIX\dokan\objfre_win7_amd64</OutDir>
+    <NMakeOutput>C:\Development\Projects\dokAIX\dokan\objfre_win7_amd64\amd64\dokan.sys</NMakeOutput>
+    <NMakePreprocessorDefinitions>WIN32;_CONSOLE;_AMD64_;_DDK_;_NDEBUG;DBG=0;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath>$(WDKPATH)\inc\ddk;$(WDKPATH)\inc\api;$(WDKPATH)\inc\crt;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="access.c" />
+    <ClCompile Include="cleanup.c" />
+    <ClCompile Include="close.c" />
+    <ClCompile Include="create.c" />
+    <ClCompile Include="directory.c" />
+    <ClCompile Include="dokan.c" />
+    <ClCompile Include="fileinfo.c" />
+    <ClCompile Include="flush.c" />
+    <ClCompile Include="lock.c" />
+    <ClCompile Include="mount.c" />
+    <ClCompile Include="read.c" />
+    <ClCompile Include="security.c" />
+    <ClCompile Include="setfile.c" />
+    <ClCompile Include="status.c" />
+    <ClCompile Include="timeout.c" />
+    <ClCompile Include="version.c" />
+    <ClCompile Include="volume.c" />
+    <ClCompile Include="write.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="dokan.h" />
+    <ClInclude Include="dokanc.h" />
+    <ClInclude Include="dokani.h" />
+    <ClInclude Include="fileinfo.h" />
+    <ClInclude Include="list.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="sources" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
