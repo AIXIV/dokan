@@ -78,7 +78,7 @@ build</NMakeReBuildCommandLine>
     <NMakeIncludeSearchPath>$(WDKPATH)\inc\ddk;$(WDKPATH)\inc\api;$(WDKPATH)\inc\crt;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <NMakeBuildCommandLine>call $(WDKPATH)\bin\setenv.bat $(WDKPATH) chk AMD64 win7
+    <NMakeBuildCommandLine>call $(WDKPATH)\bin\setenv.bat $(WDKPATH) chk x64 win7
 cd /d C:\Development\Projects\dokAIX\dokan
 build</NMakeBuildCommandLine>
     <NMakeCleanCommandLine>rmdir /s /q C:\Development\Projects\dokAIX\dokan\objchk_win7_amd64</NMakeCleanCommandLine>
@@ -93,7 +93,7 @@ build</NMakeReBuildCommandLine>
     <NMakeIncludeSearchPath>$(WDKPATH)\inc\ddk;$(WDKPATH)\inc\api;$(WDKPATH)\inc\crt;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <NMakeBuildCommandLine>call $(WDKPATH)\bin\setenv.bat $(WDKPATH) fre AMD64 win7
+    <NMakeBuildCommandLine>call $(WDKPATH)\bin\setenv.bat $(WDKPATH) fre x64 win7
 cd /d C:\Development\Projects\dokAIX\dokan
 build</NMakeBuildCommandLine>
     <NMakeCleanCommandLine>rmdir /s /q C:\Development\Projects\dokAIX\dokan\objfre_win7_amd64</NMakeCleanCommandLine>
