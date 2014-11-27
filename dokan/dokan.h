@@ -41,7 +41,10 @@ extern "C" {
 #endif
 
 // The current Dokan version (ver 0.6.0). Please set this constant on DokanOptions->Version.
-#define DOKAN_VERSION		600
+// Increased to ver 0.7.0 for dokAIX, based on the original Dokan ver 0.6.0 as above.
+// Begin dokAIX change
+#define DOKAN_VERSION		700
+// End dokAIX change
 
 #define DOKAN_OPTION_DEBUG		1 // ouput debug message
 #define DOKAN_OPTION_STDERR		2 // ouput debug message to stderr
@@ -268,10 +271,11 @@ typedef struct _DOKAN_OPERATIONS {
 		ULONG, // SecurityDescriptor length
 		PDOKAN_FILE_INFO);
 
+    // Begin dokAIX change
+    void (DOKAN_CALLBACK *MountComplete) ();
+    // End dokAIX change
 
 } DOKAN_OPERATIONS, *PDOKAN_OPERATIONS;
-
-
 
 /* DokanMain returns error codes */
 #define DOKAN_SUCCESS				 0
