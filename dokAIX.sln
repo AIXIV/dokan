@@ -4,10 +4,19 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dokan", "dokan\dokan.vcxproj", "{26D56C43-F35D-4683-B685-0C29CEBFEB24}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dokan_control", "dokan_control\dokan_control.vcxproj", "{18CAAB41-9851-40D2-99F6-AC82FA79C46B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{26D56C43-F35D-4683-B685-0C29CEBFEB24} = {26D56C43-F35D-4683-B685-0C29CEBFEB24}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dokan_mount", "dokan_mount\dokan_mount.vcxproj", "{B9D6348D-E662-4C57-B0CD-FE2371BDA70A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{26D56C43-F35D-4683-B685-0C29CEBFEB24} = {26D56C43-F35D-4683-B685-0C29CEBFEB24}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sys", "sys\sys.vcxproj", "{4522413D-9C2C-459F-9328-E95025AFA95E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{26D56C43-F35D-4683-B685-0C29CEBFEB24} = {26D56C43-F35D-4683-B685-0C29CEBFEB24}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -59,7 +59,7 @@ build</NMakeReBuildCommandLine>
     <IntDir>C:\Development\Projects\dokAIX\sys\objchk_win7_x86</IntDir>
     <OutDir>C:\Development\Projects\dokAIX\sys\objchk_win7_x86</OutDir>
     <NMakeOutput>C:\Development\Projects\dokAIX\sys\objchk_win7_x86\i386\dokan.sys</NMakeOutput>
-    <NMakePreprocessorDefinitions>WIN32;_CONSOLE;_X86_;_DDK_;_DEBUG;DBG=1;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>ENABLE_DOKAIX_INTERFACE;WIN32;_CONSOLE;_X86_;_DDK_;_DEBUG;DBG=1;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath>$(WDKPATH)\inc\ddk;$(WDKPATH)\inc\api;$(WDKPATH)\inc\crt;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -74,7 +74,7 @@ build</NMakeReBuildCommandLine>
     <IntDir>C:\Development\Projects\dokAIX\sys\objfre_win7_x86</IntDir>
     <OutDir>C:\Development\Projects\dokAIX\sys\objfre_win7_x86</OutDir>
     <NMakeOutput>C:\Development\Projects\dokAIX\sys\objfre_win7_x86\i386\dokan.sys</NMakeOutput>
-    <NMakePreprocessorDefinitions>WIN32;_CONSOLE;_X86_;_DDK_;_NDEBUG;DBG=0;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>ENABLE_DOKAIX_INTERFACE;WIN32;_CONSOLE;_X86_;_DDK_;_NDEBUG;DBG=0;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath>$(WDKPATH)\inc\ddk;$(WDKPATH)\inc\api;$(WDKPATH)\inc\crt;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -89,7 +89,7 @@ build</NMakeReBuildCommandLine>
     <IntDir>C:\Development\Projects\dokAIX\sys\objchk_win7_amd64</IntDir>
     <OutDir>C:\Development\Projects\dokAIX\sys\objchk_win7_amd64</OutDir>
     <NMakeOutput>C:\Development\Projects\dokAIX\sys\objchk_win7_amd64\amd64\dokan.sys</NMakeOutput>
-    <NMakePreprocessorDefinitions>WIN32;_CONSOLE;_AMD64_;_DDK_;_DEBUG;DBG=1;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>ENABLE_DOKAIX_INTERFACE;WIN32;_CONSOLE;_AMD64_;_DDK_;_DEBUG;DBG=1;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath>$(WDKPATH)\inc\ddk;$(WDKPATH)\inc\api;$(WDKPATH)\inc\crt;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -104,7 +104,7 @@ build</NMakeReBuildCommandLine>
     <IntDir>C:\Development\Projects\dokAIX\sys\objfre_win7_amd64</IntDir>
     <OutDir>C:\Development\Projects\dokAIX\sys\objfre_win7_amd64</OutDir>
     <NMakeOutput>C:\Development\Projects\dokAIX\sys\objfre_win7_amd64\amd64\dokan.sys</NMakeOutput>
-    <NMakePreprocessorDefinitions>WIN32;_CONSOLE;_AMD64_;_DDK_;_NDEBUG;DBG=0;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>ENABLE_DOKAIX_INTERFACE;WIN32;_CONSOLE;_AMD64_;_DDK_;_NDEBUG;DBG=0;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath>$(WDKPATH)\inc\ddk;$(WDKPATH)\inc\api;$(WDKPATH)\inc\crt;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
   </PropertyGroup>
   <ItemDefinitionGroup>

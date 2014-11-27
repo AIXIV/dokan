@@ -1,0 +1,2 @@
+1) Install Windows WDK 7.1 and set environment variable WDKPATH to its installation path.
+2) Build the solution in Visual Studio.
