@@ -18,8 +18,9 @@ You should have received a copy of the GNU Lesser General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
+#ifndef _UNICODE
 #define _UNICODE
+#endif
 
 #include <windows.h>
 #include <winioctl.h>

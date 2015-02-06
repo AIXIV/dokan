@@ -74,7 +74,7 @@ PMOUNT_ENTRY
 FindMountEntry(PDOKAN_CONTROL	DokanControl)
 {
 	PLIST_ENTRY		listEntry;
-	PMOUNT_ENTRY	mountEntry;
+    PMOUNT_ENTRY	mountEntry = NULL;
 	BOOL			useMountPoint = wcslen(DokanControl->MountPoint) > 0;
 	BOOL			found = FALSE;
 
@@ -101,7 +101,7 @@ FindMountEntry(PDOKAN_CONTROL	DokanControl)
 
 	LeaveCriticalSection(&g_CriticalSection);
 
-	if (found) {
+	if (found && mountEntry != NULL) {
 		DbgPrintW(L"FindMountEntry %s -> %s\n",
 			mountEntry->MountControl.MountPoint, mountEntry->MountControl.DeviceName);
 		return mountEntry;

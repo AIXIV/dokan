@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <TARGETNAME Condition="'$(OVERRIDE_TARGETNAME)'!='true'">dokAIXMountService</TARGETNAME>
+    <TARGETTYPE Condition="'$(OVERRIDE_TARGETTYPE)'!='true'">PROGRAM</TARGETTYPE>
+    <C_DEFINES Condition="'$(OVERRIDE_C_DEFINES)'!='true'">$(C_DEFINES) -DUNICODE -D_UNICODE</C_DEFINES>
+    <USE_MSVCRT Condition="'$(OVERRIDE_USE_MSVCRT)'!='true'">1</USE_MSVCRT>
+    <INCLUDES Condition="'$(OVERRIDE_INCLUDES)'!='true'">..\Driver;..\Library</INCLUDES>
+    <SOURCES Condition="'$(OVERRIDE_SOURCES)'!='true'">mount.c  		mounter.c</SOURCES>
+    <UMTYPE Condition="'$(OVERRIDE_UMTYPE)'!='true'">windows</UMTYPE>
+    <UMBASE Condition="'$(OVERRIDE_UMBASE)'!='true'">0x400000</UMBASE>
+    <UMENTRY Condition="'$(OVERRIDE_UMENTRY)'!='true'">winmain</UMENTRY>
+  </PropertyGroup>
+</Project>

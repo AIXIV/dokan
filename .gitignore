@@ -5,3 +5,5 @@
 *.opensdf
 *.log
 *.err
+*Win*Debug
+*Win*Release
