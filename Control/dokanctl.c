@@ -29,6 +29,9 @@ THE SOFTWARE.
 #include "dokan.h"
 #include "dokanc.h"
 
+#define DOKAIX_DRIVER_SUBPATH L"\\drivers\\dokAIX.sys"
+#define DOKAIX_MOUNTSERVICE_SUBPATH L"\\dokAIXMountService.exe"
+
 int ShowMountList()
 {
 	DOKAN_CONTROL control;
@@ -121,29 +124,23 @@ int Unmount(LPCWSTR	MountPoint, BOOL ForceUnmount)
 int __cdecl
 wmain(int argc, PWCHAR argv[])
 {
-	ULONG	i;
-	WCHAR	fileName[MAX_PATH];
 	WCHAR	driverFullPath[MAX_PATH];
 	WCHAR	mounterFullPath[MAX_PATH];
 	WCHAR	type;
 
 	//setlocale(LC_ALL, "");
 
-	GetModuleFileName(NULL, fileName, MAX_PATH);
+    GetModuleFileName(NULL, mounterFullPath, MAX_PATH);
 
-	// search the last "\"
-	for(i = wcslen(fileName) -1; i > 0 && fileName[i] != L'\\'; --i)
-		;
-	fileName[i] = L'\0';
+	// search the last "\" (remove own file name, leaves only path)
+    WCHAR* lastSlash = wcsrchr(mounterFullPath, L'\\');
+    *lastSlash = '\0';
 
-	ZeroMemory(mounterFullPath, sizeof(mounterFullPath));
-	ZeroMemory(driverFullPath, sizeof(driverFullPath));
-	wcscpy_s(mounterFullPath, MAX_PATH, fileName);
-	mounterFullPath[i] = L'\\';
-	wcscat_s(mounterFullPath, MAX_PATH, L"mounter.exe");
+    wcscat_s(mounterFullPath, MAX_PATH, DOKAIX_MOUNTSERVICE_SUBPATH);
+
 
 	GetSystemDirectory(driverFullPath, MAX_PATH);
-	wcscat_s(driverFullPath, MAX_PATH, L"\\drivers\\dokan.sys");
+    wcscat_s(driverFullPath, MAX_PATH, DOKAIX_DRIVER_SUBPATH);
 
 	fwprintf(stderr, L"driver path %s\n", driverFullPath);
 	fwprintf(stderr, L"mounter path %s\n", mounterFullPath);
