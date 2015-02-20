@@ -3,16 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 12.0
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Package", "Package", "{00CF71FE-4AFF-44D0-A34A-FA72B68696BC}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MountService", "MountService", "{46C79446-B6B1-4520-A152-67522A1000EB}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Control", "Control", "{BE8C0206-C3E1-4852-9A73-0C1DDFBAAC6C}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Driver", "Driver", "{672E6413-F927-4BD3-8367-7F31E25C4DF3}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Library", "Library", "{FCA28153-ADC5-4CC5-8FBA-9BD80F19B47A}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DriverPackage", "Package\dokAIXDriverPackage.vcxproj", "{0B8A74CD-501B-468E-895D-9A991EB09BDE}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MountService", "MountService\dokAIXMountService.vcxproj", "{8EA73C4A-0E60-4CDA-A9E7-F27B62F1BA32}"
