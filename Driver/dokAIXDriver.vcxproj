@@ -53,7 +53,7 @@
   <PropertyGroup Label="PropertySheets">
     <PlatformToolset>WindowsKernelModeDriver8.1</PlatformToolset>
     <ConfigurationType>Driver</ConfigurationType>
-    <DriverType>WDM</DriverType>
+    <DriverType>KMDF</DriverType>
     <TARGETNAME>dokAIX</TARGETNAME>
     <Configuration Condition="'$(Configuration)' == ''">Win8.1 Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">Win32</Platform>
