@@ -1,2 +1,2 @@
-cd /d "C:\Development\dokAIX\sys" &&msbuild "dokan.vcxproj" /t:sdv /p:inputs="/devenv /check" /p:configuration="Win8 Release" /p:platform="Win32" 
-exit 0 
+cd /d "C:\Development\Projects\dokAIX\Driver" &msbuild "dokAIXDriver.vcxproj" /t:sdvViewer /p:configuration="Win8.1 Debug" /p:platform=x64
+exit %errorlevel% 
