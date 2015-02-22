@@ -29,7 +29,7 @@ THE SOFTWARE.
 #include "dokan.h"
 #include "dokanc.h"
 
-#define DOKAIX_DRIVER_SUBPATH L"\\drivers\\dokAIX.sys"
+#define DOKAIX_DRIVER_SUBPATH L"\\dokAIX.sys"
 #define DOKAIX_MOUNTSERVICE_SUBPATH L"\\dokAIXMountService.exe"
 
 int ShowMountList()
@@ -136,10 +136,12 @@ wmain(int argc, PWCHAR argv[])
     WCHAR* lastSlash = wcsrchr(mounterFullPath, L'\\');
     *lastSlash = '\0';
 
+	wcscpy_s(driverFullPath, MAX_PATH, mounterFullPath);
+
     wcscat_s(mounterFullPath, MAX_PATH, DOKAIX_MOUNTSERVICE_SUBPATH);
 
 
-	GetSystemDirectory(driverFullPath, MAX_PATH);
+	//GetSystemDirectory(driverFullPath, MAX_PATH);
     wcscat_s(driverFullPath, MAX_PATH, DOKAIX_DRIVER_SUBPATH);
 
 	fwprintf(stderr, L"driver path %s\n", driverFullPath);
