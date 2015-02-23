@@ -70,207 +70,215 @@ typedef struct _DOKAN_OPEN_INFO {
 
 BOOL
 DokanStart(
-	PDOKAN_INSTANCE	Instance);
+	_In_ PDOKAN_INSTANCE	Instance);
 
 BOOL
 SendToDevice(
-	LPCWSTR	DeviceName,
-	DWORD	IoControlCode,
-	PVOID	InputBuffer,
-	ULONG	InputLength,
-	PVOID	OutputBuffer,
-	ULONG	OutputLength,
-	PULONG	ReturnedLength);
+	_In_ LPCWSTR		DeviceName,
+	_In_ DWORD			IoControlCode,
+	_In_opt_ PVOID		InputBuffer,
+	_In_ ULONG			InputLength,
+	_Out_opt_ PVOID		OutputBuffer,
+	_In_ ULONG			OutputLength,
+	_Out_opt_ PULONG	ReturnedLength);
 
 LPCWSTR
-GetRawDeviceName(LPCWSTR	DeviceName);
+GetRawDeviceName(_In_ LPCWSTR	DeviceName);
 
 DWORD __stdcall
 DokanLoop(
-	PVOID Param);
+	_In_ PVOID Param);
 
 
 BOOL
 DokanMount(
-	LPCWSTR	MountPoint,
-	LPCWSTR	DeviceName);
+	_In_ LPCWSTR	MountPoint,
+	_In_ LPCWSTR	DeviceName);
 
 VOID
 SendEventInformation(
-	HANDLE				Handle,
-	PEVENT_INFORMATION	EventInfo,
-	ULONG				EventLength,
-	PDOKAN_INSTANCE		DokanInstance);
+	_In_ HANDLE					Handle,
+	_In_ PEVENT_INFORMATION		EventInfo,
+	_In_ ULONG					EventLength,
+	_In_opt_ PDOKAN_INSTANCE	DokanInstance);
 
+VOID
+SetupFailureEventInformation(
+	_In_ PEVENT_CONTEXT			EventContext,
+	_In_ PDOKAN_INSTANCE		DokanInstance,
+	_Out_ PEVENT_INFORMATION	EventInfo
+);
 
+_Success_(return != NULL)
+_Ret_maybenull_
 PEVENT_INFORMATION
 DispatchCommon(
-	PEVENT_CONTEXT		EventContext,
-	ULONG				SizeOfEventInfo,
-	PDOKAN_INSTANCE		DokanInstance,
-	PDOKAN_FILE_INFO	DokanFileInfo,
-	PDOKAN_OPEN_INFO*	DokanOpenInfo);
+	_In_ PEVENT_CONTEXT								EventContext,
+	_In_ ULONG										SizeOfEventInfo,
+	_In_ PDOKAN_INSTANCE							DokanInstance,
+	_Out_ PDOKAN_FILE_INFO							DokanFileInfo,
+	_Outptr_result_maybenull_ PDOKAN_OPEN_INFO*		DokanOpenInfo);
 
 
 VOID
 DispatchDirectoryInformation(
-	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance);
+	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE	DokanInstance);
 
 
 VOID
 DispatchQueryInformation(
- 	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance);
+ 	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE		DokanInstance);
 
 
 VOID
 DispatchQueryVolumeInformation(
- 	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance);
+ 	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE		DokanInstance);
 
 
 VOID
 DispatchSetInformation(
- 	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance);
+ 	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE	DokanInstance);
 
 
 VOID
 DispatchRead(
- 	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance);
+ 	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE	DokanInstance);
 
 
 VOID
 DispatchWrite(
- 	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance);
+ 	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE	DokanInstance);
 
 
 VOID
 DispatchCreate(
-	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance);
+	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE	DokanInstance);
 
 
 VOID
 DispatchClose(
-  	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance);
+  	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE	DokanInstance);
 
 
 VOID
 DispatchCleanup(
-  	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance);
+  	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE	DokanInstance);
 
 
 VOID
 DispatchFlush(
-  	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance);
+  	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE	DokanInstance);
 
 
 VOID
 DispatchUnmount(
-  	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance);
+  	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE	DokanInstance);
 
 
 VOID
 DispatchLock(
-	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance);
+	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE	DokanInstance);
 
 
 VOID
 DispatchQuerySecurity(
-	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance);
+	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE	DokanInstance);
 
 
 VOID
 DispatchSetSecurity(
-	HANDLE			Handle,
-	PEVENT_CONTEXT	EventContext,
-	PDOKAN_INSTANCE	DokanInstance);
+	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE	DokanInstance);
 
 
 BOOLEAN
 InstallDriver(
-	SC_HANDLE  SchSCManager,
-	LPCWSTR    DriverName,
-	LPCWSTR    ServiceExe);
+	_In_ SC_HANDLE  SchSCManager,
+	_In_ LPCWSTR    DriverName,
+	_In_ LPCWSTR    ServiceExe);
 
 
 BOOLEAN
 RemoveDriver(
-    SC_HANDLE  SchSCManager,
-    LPCWSTR    DriverName);
+	_In_ SC_HANDLE  SchSCManager,
+	_In_ LPCWSTR    DriverName);
 
 
 BOOLEAN
 StartDriver(
-    SC_HANDLE  SchSCManager,
-    LPCWSTR    DriverName);
+	_In_ SC_HANDLE  SchSCManager,
+	_In_ LPCWSTR    DriverName);
 
 
 BOOLEAN
 StopDriver(
-    SC_HANDLE  SchSCManager,
-    LPCWSTR    DriverName);
+	_In_ SC_HANDLE  SchSCManager,
+	_In_ LPCWSTR    DriverName);
 
 
 BOOLEAN
 ManageDriver(
-	LPCWSTR  DriverName,
-    LPCWSTR  ServiceName,
-    USHORT   Function);
+	_In_ LPCWSTR  DriverName,
+	_In_ LPCWSTR  ServiceName,
+	_In_ USHORT   Function);
 
 
 BOOL
 SendReleaseIRP(
-	LPCWSTR DeviceName);
+	_In_ LPCWSTR DeviceName);
 
 VOID
 CheckFileName(
-	LPWSTR	FileName);
+	_In_ LPWSTR	FileName);
 
 VOID
 ClearFindData(
-  PLIST_ENTRY	ListHead);
+	_In_opt_ PLIST_ENTRY ListHead);
 
 DWORD WINAPI
 DokanKeepAlive(
-	PVOID	Param);
+	_In_ PDOKAN_INSTANCE Param);
 
 
 ULONG
-GetNTStatus(DWORD ErrorCode);
+GetNTStatus(_In_ DWORD ErrorCode);
 
 PDOKAN_OPEN_INFO
 GetDokanOpenInfo(
-	PEVENT_CONTEXT		EventInfomation,
-	PDOKAN_INSTANCE		DokanInstance);
+	_In_ PEVENT_CONTEXT		EventInfomation,
+	_In_ PDOKAN_INSTANCE	DokanInstance);
 
 VOID
 ReleaseDokanOpenInfo(
-	PEVENT_INFORMATION	EventInfomation,
-	PDOKAN_INSTANCE		DokanInstance);
+	_In_ PEVENT_INFORMATION	EventInfomation,
+	_In_ PDOKAN_INSTANCE	DokanInstance);
 
 
 #ifdef __cplusplus

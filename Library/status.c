@@ -24,7 +24,7 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "fileinfo.h"
 
 
-ULONG GetNTStatus(DWORD ErrorCode)
+ULONG GetNTStatus(_In_ DWORD ErrorCode)
 {
 	switch (ErrorCode) {
 	case ERROR_DIR_NOT_EMPTY:

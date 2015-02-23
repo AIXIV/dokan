@@ -31,7 +31,7 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 FORCEINLINE
 VOID
 InitializeListHead(
-    PLIST_ENTRY ListHead)
+    _Inout_ PLIST_ENTRY ListHead)
 {
     ListHead->Flink = ListHead->Blink = ListHead;
 }
@@ -39,7 +39,7 @@ InitializeListHead(
 FORCEINLINE
 BOOLEAN
 IsListEmpty(
-    const LIST_ENTRY * ListHead)
+    _In_opt_ const LIST_ENTRY * ListHead)
 {
     return (BOOLEAN)(ListHead == NULL || ListHead->Flink == ListHead);
 }
@@ -47,7 +47,7 @@ IsListEmpty(
 FORCEINLINE
 BOOLEAN
 RemoveEntryList(
-    PLIST_ENTRY Entry)
+    _Inout_opt_ PLIST_ENTRY Entry)
 {
     PLIST_ENTRY Blink;
     PLIST_ENTRY Flink;
@@ -66,7 +66,7 @@ RemoveEntryList(
 FORCEINLINE
 PLIST_ENTRY
 RemoveHeadList(
-    PLIST_ENTRY ListHead)
+    _Inout_ PLIST_ENTRY ListHead)
 {
     PLIST_ENTRY Flink;
     PLIST_ENTRY Entry;
@@ -83,7 +83,7 @@ RemoveHeadList(
 FORCEINLINE
 PLIST_ENTRY
 RemoveTailList(
-    PLIST_ENTRY ListHead)
+    _Inout_ PLIST_ENTRY ListHead)
 {
     PLIST_ENTRY Blink;
     PLIST_ENTRY Entry;
@@ -99,8 +99,8 @@ RemoveTailList(
 FORCEINLINE
 VOID
 InsertTailList(
-    PLIST_ENTRY ListHead,
-    PLIST_ENTRY Entry)
+    _Inout_ PLIST_ENTRY ListHead,
+    _Inout_ PLIST_ENTRY Entry)
 {
     PLIST_ENTRY Blink;
 
@@ -115,8 +115,8 @@ InsertTailList(
 FORCEINLINE
 VOID
 InsertHeadList(
-    PLIST_ENTRY ListHead,
-    PLIST_ENTRY Entry)
+    _Inout_ PLIST_ENTRY ListHead,
+    _Inout_ PLIST_ENTRY Entry)
 {
     PLIST_ENTRY Flink;
 
@@ -130,8 +130,8 @@ InsertHeadList(
 FORCEINLINE
 VOID
 AppendTailList(
-    PLIST_ENTRY ListHead,
-    PLIST_ENTRY ListToAppend)
+    _Inout_ PLIST_ENTRY ListHead,
+    _Inout_ PLIST_ENTRY ListToAppend)
 {
     PLIST_ENTRY ListEnd = ListHead->Blink;
 
@@ -144,7 +144,7 @@ AppendTailList(
 FORCEINLINE
 PSINGLE_LIST_ENTRY
 PopEntryList(
-    PSINGLE_LIST_ENTRY ListHead)
+    _Inout_ PSINGLE_LIST_ENTRY ListHead)
 {
     PSINGLE_LIST_ENTRY FirstEntry;
     FirstEntry = ListHead->Next;
@@ -159,8 +159,8 @@ PopEntryList(
 FORCEINLINE
 VOID
 PushEntryList(
-    PSINGLE_LIST_ENTRY ListHead,
-    PSINGLE_LIST_ENTRY Entry)
+    _Inout_ PSINGLE_LIST_ENTRY ListHead,
+    _Inout_ PSINGLE_LIST_ENTRY Entry)
 {
     Entry->Next = ListHead->Next;
     ListHead->Next = Entry;

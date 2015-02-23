@@ -24,10 +24,10 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 int DokanGetDiskFreeSpace(
-	PULONGLONG			FreeBytesAvailable,
-	PULONGLONG			TotalNumberOfBytes,
-	PULONGLONG			TotalNumberOfFreeBytes,
-	PDOKAN_FILE_INFO	DokanFileInfo)
+	_Out_ PULONGLONG		FreeBytesAvailable,
+	_Out_ PULONGLONG		TotalNumberOfBytes,
+	_Out_ PULONGLONG		TotalNumberOfFreeBytes,
+	_In_ PDOKAN_FILE_INFO	DokanFileInfo)
 {
 	*FreeBytesAvailable = 512*1024*1024;
 	*TotalNumberOfBytes = 1024*1024*1024;
@@ -38,14 +38,14 @@ int DokanGetDiskFreeSpace(
 
 
 int DokanGetVolumeInformation(
-	LPWSTR		VolumeNameBuffer,
-	DWORD		VolumeNameSize,
-	LPDWORD		VolumeSerialNumber,
-	LPDWORD		MaximumComponentLength,
-	LPDWORD		FileSystemFlags,
-	LPWSTR		FileSystemNameBuffer,
-	DWORD		FileSystemNameSize,
-	PDOKAN_FILE_INFO	DokanFileInfo)
+	_Out_ LPWSTR			VolumeNameBuffer,
+	_In_ DWORD				VolumeNameSize,
+	_Out_ LPDWORD			VolumeSerialNumber,
+	_Out_ LPDWORD			MaximumComponentLength,
+	_Out_ LPDWORD			FileSystemFlags,
+	_Out_ LPWSTR			FileSystemNameBuffer,
+	_In_ DWORD				FileSystemNameSize,
+	_In_ PDOKAN_FILE_INFO	DokanFileInfo)
 {
 	wcscpy_s(VolumeNameBuffer, VolumeNameSize / sizeof(WCHAR), L"DOKAN");
 	*VolumeSerialNumber = 0x19831116;
@@ -64,10 +64,10 @@ int DokanGetVolumeInformation(
 
 ULONG
 DokanFsVolumeInformation(
-	PEVENT_INFORMATION	EventInfo,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_FILE_INFO	FileInfo,
-	PDOKAN_OPERATIONS	DokanOperations)
+	_In_ PEVENT_INFORMATION		EventInfo,
+	_In_ PEVENT_CONTEXT			EventContext,
+	_In_ PDOKAN_FILE_INFO		FileInfo,
+	_Inout_ PDOKAN_OPERATIONS	DokanOperations)
 {
 	WCHAR	volumeName[MAX_PATH];
 	DWORD	volumeSerial;
@@ -136,10 +136,10 @@ DokanFsVolumeInformation(
 
 ULONG
 DokanFsSizeInformation(
-	PEVENT_INFORMATION	EventInfo,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_FILE_INFO	FileInfo,
-	PDOKAN_OPERATIONS	DokanOperations)
+	_In_ PEVENT_INFORMATION		EventInfo,
+	_In_ PEVENT_CONTEXT			EventContext,
+	_In_ PDOKAN_FILE_INFO		FileInfo,
+	_Inout_ PDOKAN_OPERATIONS	DokanOperations)
 {
 	ULONGLONG	freeBytesAvailable = 0;
 	ULONGLONG	totalBytes = 0;
@@ -182,10 +182,10 @@ DokanFsSizeInformation(
 
 ULONG
 DokanFsAttributeInformation(
-	PEVENT_INFORMATION	EventInfo,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_FILE_INFO	FileInfo,
-	PDOKAN_OPERATIONS	DokanOperations)
+	_In_ PEVENT_INFORMATION		EventInfo,
+	_In_ PEVENT_CONTEXT			EventContext,
+	_In_ PDOKAN_FILE_INFO		FileInfo,
+	_Inout_ PDOKAN_OPERATIONS	DokanOperations)
 {
 	WCHAR	volumeName[MAX_PATH];
 	DWORD	volumeSerial;
@@ -252,10 +252,10 @@ DokanFsAttributeInformation(
 
 ULONG
 DokanFsFullSizeInformation(
-	PEVENT_INFORMATION	EventInfo,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_FILE_INFO	FileInfo,
-	PDOKAN_OPERATIONS	DokanOperations)
+	_In_ PEVENT_INFORMATION		EventInfo,
+	_In_ PEVENT_CONTEXT			EventContext,
+	_In_ PDOKAN_FILE_INFO		FileInfo,
+	_Inout_ PDOKAN_OPERATIONS	DokanOperations)
 {
 	ULONGLONG	freeBytesAvailable = 0;
 	ULONGLONG	totalBytes = 0;
@@ -299,59 +299,70 @@ DokanFsFullSizeInformation(
 
 VOID
 DispatchQueryVolumeInformation(
-	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance)
+	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE	DokanInstance)
 {
 	PEVENT_INFORMATION		eventInfo;
 	DOKAN_FILE_INFO			fileInfo;
 	PDOKAN_OPEN_INFO		openInfo;
 	int						status = -1;
-	ULONG					sizeOfEventInfo = sizeof(EVENT_INFORMATION)
-								- 8 + EventContext->Volume.BufferLength;
+	ULONG					sizeOfEventInfo = sizeof(EVENT_INFORMATION) + EventContext->Volume.BufferLength;
 
 	eventInfo = (PEVENT_INFORMATION)malloc(sizeOfEventInfo);
+	if (eventInfo != NULL)
+	{
 
-	RtlZeroMemory(eventInfo, sizeOfEventInfo);
-	RtlZeroMemory(&fileInfo, sizeof(DOKAN_FILE_INFO));
+		RtlZeroMemory(eventInfo, sizeOfEventInfo);
+		RtlZeroMemory(&fileInfo, sizeof(DOKAN_FILE_INFO));
 
-	// There is no Context because file is not opened
-	// so DispatchCommon is not used here
-	openInfo = (PDOKAN_OPEN_INFO)EventContext->Context;
-	
-	eventInfo->BufferLength = 0;
-	eventInfo->SerialNumber = EventContext->SerialNumber;
+		// There is no Context because file is not opened
+		// so DispatchCommon is not used here
+		openInfo = (PDOKAN_OPEN_INFO)EventContext->Context;
 
-	fileInfo.ProcessId = EventContext->ProcessId;
-	fileInfo.DokanOptions = DokanInstance->DokanOptions;
+		eventInfo->BufferLength = 0;
+		eventInfo->SerialNumber = EventContext->SerialNumber;
 
-	eventInfo->Status = STATUS_NOT_IMPLEMENTED;
-	eventInfo->BufferLength = 0;
+		fileInfo.ProcessId = EventContext->ProcessId;
+		fileInfo.DokanOptions = DokanInstance->DokanOptions;
 
-	DbgPrint("###QueryVolumeInfo %04d\n", openInfo ? openInfo->EventId : -1);
+		eventInfo->Status = STATUS_NOT_IMPLEMENTED;
 
-	switch (EventContext->Volume.FsInformationClass) {
-	case FileFsVolumeInformation:
-		eventInfo->Status = DokanFsVolumeInformation(
-								eventInfo, EventContext, &fileInfo, DokanInstance->DokanOperations);
-		break;
-	case FileFsSizeInformation:
-		eventInfo->Status = DokanFsSizeInformation(
-								eventInfo, EventContext, &fileInfo, DokanInstance->DokanOperations);
-		break;
-	case FileFsAttributeInformation:
-		eventInfo->Status = DokanFsAttributeInformation(
-								eventInfo, EventContext, &fileInfo, DokanInstance->DokanOperations);
-		break;
-	case FileFsFullSizeInformation:
-		eventInfo->Status = DokanFsFullSizeInformation(
-								eventInfo, EventContext, &fileInfo, DokanInstance->DokanOperations);
-		break;
-	default:
-		DbgPrint("error unknown volume info %d\n", EventContext->Volume.FsInformationClass);
+		DbgPrint("###QueryVolumeInfo %04d\n", openInfo ? openInfo->EventId : -1);
+
+		switch (EventContext->Volume.FsInformationClass) {
+		case FileFsVolumeInformation:
+			eventInfo->Status = DokanFsVolumeInformation(
+				eventInfo, EventContext, &fileInfo, DokanInstance->DokanOperations);
+			break;
+		case FileFsSizeInformation:
+			eventInfo->Status = DokanFsSizeInformation(
+				eventInfo, EventContext, &fileInfo, DokanInstance->DokanOperations);
+			break;
+		case FileFsAttributeInformation:
+			eventInfo->Status = DokanFsAttributeInformation(
+				eventInfo, EventContext, &fileInfo, DokanInstance->DokanOperations);
+			break;
+		case FileFsFullSizeInformation:
+			eventInfo->Status = DokanFsFullSizeInformation(
+				eventInfo, EventContext, &fileInfo, DokanInstance->DokanOperations);
+			break;
+		default:
+			DbgPrint("error unknown volume info %d\n", EventContext->Volume.FsInformationClass);
+		}
+
+		SendEventInformation(Handle, eventInfo, sizeOfEventInfo, NULL);
+		free(eventInfo);
 	}
-
-	SendEventInformation(Handle, eventInfo, sizeOfEventInfo, NULL);
-	free(eventInfo);
+	else
+	{
+		EVENT_INFORMATION failureEventInfo;
+		DbgPrint("###QueryVolumeInfo: could not allocate eventInfo\n");
+		RtlZeroMemory(&failureEventInfo, sizeof(EVENT_INFORMATION));
+		failureEventInfo.BufferLength = 0;
+		failureEventInfo.SerialNumber = EventContext->SerialNumber;
+		failureEventInfo.Status = STATUS_BUFFER_OVERFLOW;
+		SendEventInformation(Handle, &failureEventInfo, sizeof(EVENT_INFORMATION), NULL);
+	}
 	return;
 }

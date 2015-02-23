@@ -21,8 +21,10 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "dokani.h"
 #include "fileinfo.h"
 
+_Success_(return != INVALID_HANDLE_VALUE)
+_Ret_notnull_
 HANDLE DOKANAPI
-DokanOpenRequestorToken(PDOKAN_FILE_INFO FileInfo)
+DokanOpenRequestorToken(_In_ PDOKAN_FILE_INFO FileInfo)
 {
 	BOOL	status;
 	ULONG	returnedLength;
@@ -32,7 +34,7 @@ DokanOpenRequestorToken(PDOKAN_FILE_INFO FileInfo)
 	PEVENT_INFORMATION	eventInfo;
 	HANDLE				handle = INVALID_HANDLE_VALUE;
 	ULONG				eventInfoSize;
-	
+
 	openInfo = (PDOKAN_OPEN_INFO)FileInfo->DokanContext;
 	if (openInfo == NULL) {
 		return INVALID_HANDLE_VALUE;
@@ -54,23 +56,28 @@ DokanOpenRequestorToken(PDOKAN_FILE_INFO FileInfo)
 
 	eventInfoSize = sizeof(EVENT_INFORMATION);
 	eventInfo = (PEVENT_INFORMATION)malloc(eventInfoSize);
-	RtlZeroMemory(eventInfo, eventInfoSize);
+	if (eventInfo != NULL)
+	{
+		RtlZeroMemory(eventInfo, eventInfoSize);
 
-	eventInfo->SerialNumber = eventContext->SerialNumber;
+		eventInfo->SerialNumber = eventContext->SerialNumber;
 
-	status = SendToDevice(
-				GetRawDeviceName(instance->DeviceName),
-				IOCTL_GET_ACCESS_TOKEN,
-				eventInfo,
-				eventInfoSize,
-				eventInfo,
-				eventInfoSize,
-				&returnedLength);
-	if (status) {
-		handle = eventInfo->AccessToken.Handle;
-	} else {
-		DbgPrintW(L"IOCTL_GET_ACCESS_TOKEN failed\n");
+		status = SendToDevice(
+			GetRawDeviceName(instance->DeviceName),
+			IOCTL_GET_ACCESS_TOKEN,
+			eventInfo,
+			eventInfoSize,
+			eventInfo,
+			eventInfoSize,
+			&returnedLength);
+		if (status) {
+			handle = eventInfo->AccessToken.Handle;
+		}
+		else {
+			DbgPrintW(L"IOCTL_GET_ACCESS_TOKEN failed\n");
+		}
+		free(eventInfo);
 	}
-	free(eventInfo);
+	// INVALID_HANDLE_VALUE is returned, if no handle was obtained
 	return handle;
 }

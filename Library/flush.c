@@ -25,9 +25,9 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 VOID
 DispatchFlush(
-	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance)
+	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE	DokanInstance)
 {
 	DOKAN_FILE_INFO		fileInfo;
 	PEVENT_INFORMATION	eventInfo;
@@ -40,25 +40,39 @@ DispatchFlush(
 	eventInfo = DispatchCommon(
 		EventContext, sizeOfEventInfo, DokanInstance, &fileInfo, &openInfo);
 
-	DbgPrint("###Flush %04d\n", openInfo != NULL ? openInfo->EventId : -1);
+	if (eventInfo != NULL)
+	{
 
-	eventInfo->Status = STATUS_SUCCESS;
+		DbgPrint("###Flush %04d\n", openInfo != NULL ? openInfo->EventId : -1);
 
-	if (DokanInstance->DokanOperations->FlushFileBuffers) {
+		eventInfo->Status = STATUS_SUCCESS;
 
-		status = DokanInstance->DokanOperations->FlushFileBuffers(
-					EventContext->Flush.FileName,
-					&fileInfo);
+		if (DokanInstance->DokanOperations->FlushFileBuffers) {
 
-		eventInfo->Status = status < 0 ?
-					STATUS_NOT_SUPPORTED : STATUS_SUCCESS;
+			status = DokanInstance->DokanOperations->FlushFileBuffers(
+				EventContext->Flush.FileName,
+				&fileInfo);
+
+			eventInfo->Status = status < 0 ?
+			STATUS_NOT_SUPPORTED : STATUS_SUCCESS;
+		}
+
+		if (openInfo != NULL)
+		{
+			openInfo->UserContext = fileInfo.Context;
+		}
+
+		SendEventInformation(Handle, eventInfo, sizeOfEventInfo, DokanInstance);
+
+		free(eventInfo);
 	}
-
-	openInfo->UserContext = fileInfo.Context;
-
-	SendEventInformation(Handle, eventInfo, sizeOfEventInfo, DokanInstance);
-
-	free(eventInfo);
+	else
+	{
+		EVENT_INFORMATION failureEventInfo;
+		DbgPrint("###Flush: could not allocate eventInfo\n");
+		SetupFailureEventInformation(EventContext, DokanInstance, &failureEventInfo);
+		SendEventInformation(Handle, &failureEventInfo, sizeof(EVENT_INFORMATION), DokanInstance);
+	}
 	return;
 }
 

@@ -24,12 +24,12 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 VOID
 DispatchCleanup(
-	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance)
+_In_ HANDLE				Handle,
+_In_ PEVENT_CONTEXT		EventContext,
+_In_ PDOKAN_INSTANCE	DokanInstance)
 {
 	PEVENT_INFORMATION		eventInfo;
-	DOKAN_FILE_INFO			fileInfo;	
+	DOKAN_FILE_INFO			fileInfo;
 	PDOKAN_OPEN_INFO		openInfo;
 	ULONG					sizeOfEventInfo = sizeof(EVENT_INFORMATION);
 
@@ -37,23 +37,34 @@ DispatchCleanup(
 
 	eventInfo = DispatchCommon(
 		EventContext, sizeOfEventInfo, DokanInstance, &fileInfo, &openInfo);
-	
-	eventInfo->Status = STATUS_SUCCESS; // return success at any case
+	if (eventInfo != NULL)
+	{
+		DbgPrint("###Cleanup %04d\n", openInfo != NULL ? openInfo->EventId : -1);
+		eventInfo->Status = STATUS_SUCCESS; // return success at any case
 
-	DbgPrint("###Cleanup %04d\n", openInfo != NULL ? openInfo->EventId : -1);
+		if (DokanInstance->DokanOperations->Cleanup) {
+			// ignore return value
+			DokanInstance->DokanOperations->Cleanup(
+				EventContext->Cleanup.FileName,
+				&fileInfo);
+		}
 
-	if (DokanInstance->DokanOperations->Cleanup) {
-		// ignore return value
-		DokanInstance->DokanOperations->Cleanup(
-			EventContext->Cleanup.FileName,
-			&fileInfo);
+		if (openInfo != NULL)
+		{
+			openInfo->UserContext = fileInfo.Context;
+		}
+
+		SendEventInformation(Handle, eventInfo, sizeOfEventInfo, DokanInstance);
+
+		free(eventInfo);
 	}
-
-	openInfo->UserContext = fileInfo.Context;
-
-	SendEventInformation(Handle, eventInfo, sizeOfEventInfo, DokanInstance);
-
-	free(eventInfo);
+	else
+	{
+		EVENT_INFORMATION failureEventInfo;
+		DbgPrint("###Cleanup: could not allocate eventInfo\n");
+		SetupFailureEventInformation(EventContext, DokanInstance, &failureEventInfo);
+		SendEventInformation(Handle, &failureEventInfo, sizeof(EVENT_INFORMATION), DokanInstance);
+	}
 	return;
 }
 

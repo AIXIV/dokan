@@ -284,17 +284,17 @@ typedef struct _DOKAN_OPERATIONS {
 
 int DOKANAPI
 DokanMain(
-	PDOKAN_OPTIONS	DokanOptions,
-	PDOKAN_OPERATIONS DokanOperations);
+	_In_ PDOKAN_OPTIONS	DokanOptions,
+	_In_ PDOKAN_OPERATIONS DokanOperations);
 
 
 BOOL DOKANAPI
 DokanUnmount(
-	WCHAR	DriveLetter);
+	_In_ WCHAR	DriveLetter);
 
 BOOL DOKANAPI
 DokanRemoveMountPoint(
-	LPCWSTR MountPoint);
+	_In_ LPCWSTR MountPoint);
 
 
 // DokanIsNameInExpression
@@ -302,9 +302,9 @@ DokanRemoveMountPoint(
 //   Expression can contain wildcard characters (? and *)
 BOOL DOKANAPI
 DokanIsNameInExpression(
-	LPCWSTR		Expression,		// matching pattern
-	LPCWSTR		Name,			// file name
-	BOOL		IgnoreCase);
+	_In_ LPCWSTR		Expression,		// matching pattern
+	_In_ LPCWSTR		Name,			// file name
+	_In_ BOOL		IgnoreCase);
 
 
 ULONG DOKANAPI
@@ -317,15 +317,17 @@ DokanDriverVersion();
 //   extends the time out of the current IO operation in driver.
 BOOL DOKANAPI
 DokanResetTimeout(
-	ULONG				Timeout,	// timeout in millisecond
-	PDOKAN_FILE_INFO	DokanFileInfo);
+	_In_ ULONG				Timeout,	// timeout in millisecond
+	_In_ PDOKAN_FILE_INFO	DokanFileInfo);
 
 // Get the handle to Access Token
 // This method needs be called in CreateFile, OpenDirectory or CreateDirectly callback.
 // The caller must call CloseHandle for the returned handle.
+_Success_(return != INVALID_HANDLE_VALUE)
+_Ret_notnull_
 HANDLE DOKANAPI
 DokanOpenRequestorToken(
-	PDOKAN_FILE_INFO	DokanFileInfo);
+	_In_ PDOKAN_FILE_INFO	DokanFileInfo);
 
 #ifdef __cplusplus
 }

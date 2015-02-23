@@ -24,12 +24,12 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "dokani.h"
 #include "fileinfo.h"
 
-
+_Success_(return == STATUS_SUCCESS)
 ULONG
 DokanFillFileBasicInfo(
-	PFILE_BASIC_INFORMATION		BasicInfo,
-	PBY_HANDLE_FILE_INFORMATION FileInfo,
-	PULONG						RemainingLength)
+	_Out_ PFILE_BASIC_INFORMATION		BasicInfo,
+	_In_ PBY_HANDLE_FILE_INFORMATION	FileInfo,
+	_Inout_ PULONG						RemainingLength)
 {
 	if (*RemainingLength < sizeof(FILE_BASIC_INFORMATION)) {
 		return STATUS_BUFFER_OVERFLOW;
@@ -50,12 +50,12 @@ DokanFillFileBasicInfo(
 	return STATUS_SUCCESS;
 }
 
-
+_Success_(return == STATUS_SUCCESS)
 ULONG
 DokanFillFileStandardInfo(
-	PFILE_STANDARD_INFORMATION	StandardInfo,
-	PBY_HANDLE_FILE_INFORMATION	FileInfo,
-	PULONG						RemainingLength)
+	_Out_ PFILE_STANDARD_INFORMATION	StandardInfo,
+	_In_ PBY_HANDLE_FILE_INFORMATION	FileInfo,
+	_Inout_ PULONG						RemainingLength)
 {
 	if (*RemainingLength < sizeof(FILE_STANDARD_INFORMATION)) {
 		return STATUS_BUFFER_OVERFLOW;
@@ -78,12 +78,12 @@ DokanFillFileStandardInfo(
 	return STATUS_SUCCESS;
 }
 
-
+_Success_(return == STATUS_SUCCESS)
 ULONG
 DokanFillFilePositionInfo(
-	PFILE_POSITION_INFORMATION	PosInfo,
-	PBY_HANDLE_FILE_INFORMATION	FileInfo,
-	PULONG						RemainingLength)
+	_Out_ PFILE_POSITION_INFORMATION	PosInfo,
+	_In_ PBY_HANDLE_FILE_INFORMATION	FileInfo,
+	_Inout_ PULONG						RemainingLength)
 {
 
 	if (*RemainingLength < sizeof(FILE_POSITION_INFORMATION)) {
@@ -98,13 +98,13 @@ DokanFillFilePositionInfo(
 	return STATUS_SUCCESS;
 }
 
-
+_Success_(return == STATUS_SUCCESS)
 ULONG
 DokanFillFileAllInfo(
-	PFILE_ALL_INFORMATION		AllInfo,
-	PBY_HANDLE_FILE_INFORMATION	FileInfo,
-	PULONG						RemainingLength,
-	PEVENT_CONTEXT				EventContext)
+	_Out_ PFILE_ALL_INFORMATION			AllInfo,
+	_In_ PBY_HANDLE_FILE_INFORMATION	FileInfo,
+	_Inout_ PULONG						RemainingLength,
+	_In_ PEVENT_CONTEXT				EventContext)
 {
 	ULONG	allRemainingLength = *RemainingLength;
 
@@ -150,13 +150,13 @@ DokanFillFileAllInfo(
 	return STATUS_SUCCESS;
 }
 
-
+_Success_(return == STATUS_SUCCESS)
 ULONG
 DokanFillFileNameInfo(
-	PFILE_NAME_INFORMATION		NameInfo,
-	PBY_HANDLE_FILE_INFORMATION	FileInfo,
-	PULONG						RemainingLength,
-	PEVENT_CONTEXT				EventContext)
+	_Out_ PFILE_NAME_INFORMATION		NameInfo,
+	_In_ PBY_HANDLE_FILE_INFORMATION	FileInfo,
+	_Inout_ PULONG						RemainingLength,
+	_In_ PEVENT_CONTEXT				EventContext)
 {
 	if (*RemainingLength < sizeof(FILE_NAME_INFORMATION) 
 		+ EventContext->File.FileNameLength) {
@@ -173,12 +173,12 @@ DokanFillFileNameInfo(
 	return STATUS_SUCCESS;
 }
 
-
+_Success_(return == STATUS_SUCCESS)
 ULONG
 DokanFillFileAttributeTagInfo(
-	PFILE_ATTRIBUTE_TAG_INFORMATION		AttrTagInfo,
-	PBY_HANDLE_FILE_INFORMATION			FileInfo,
-	PULONG								RemainingLength)
+	_Out_ PFILE_ATTRIBUTE_TAG_INFORMATION		AttrTagInfo,
+	_In_ PBY_HANDLE_FILE_INFORMATION			FileInfo,
+	_Inout_ PULONG								RemainingLength)
 {
 	if (*RemainingLength < sizeof(FILE_ATTRIBUTE_TAG_INFORMATION)) {
 		return STATUS_BUFFER_OVERFLOW;
@@ -192,12 +192,12 @@ DokanFillFileAttributeTagInfo(
 	return STATUS_SUCCESS;
 }
 
-
+_Success_(return == STATUS_SUCCESS)
 ULONG
 DokanFillNetworkOpenInfo(
-	PFILE_NETWORK_OPEN_INFORMATION	NetInfo,
-	PBY_HANDLE_FILE_INFORMATION		FileInfo,
-	PULONG							RemainingLength)
+	_Out_ PFILE_NETWORK_OPEN_INFORMATION	NetInfo,
+	_In_ PBY_HANDLE_FILE_INFORMATION		FileInfo,
+	_Inout_ PULONG							RemainingLength)
 {
 	if (*RemainingLength < sizeof(FILE_NETWORK_OPEN_INFORMATION)) {
 		return STATUS_BUFFER_OVERFLOW;
@@ -222,12 +222,12 @@ DokanFillNetworkOpenInfo(
 	return STATUS_SUCCESS;
 }
 
-
+_Success_(return == STATUS_SUCCESS)
 ULONG
 DokanFillInternalInfo(
-	PFILE_INTERNAL_INFORMATION	InternalInfo,
-	PBY_HANDLE_FILE_INFORMATION	FileInfo,
-	PULONG						RemainingLength)
+	_Out_ PFILE_INTERNAL_INFORMATION	InternalInfo,
+	_In_ PBY_HANDLE_FILE_INFORMATION	FileInfo,
+	_Inout_ PULONG						RemainingLength)
 {
 	if (*RemainingLength < sizeof(FILE_INTERNAL_INFORMATION)) {
 		return STATUS_BUFFER_OVERFLOW;
@@ -244,9 +244,10 @@ DokanFillInternalInfo(
 
 VOID
 DispatchQueryInformation(
-	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance)
+	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE		DokanInstance
+)
 {
 	PEVENT_INFORMATION			eventInfo;
 	DOKAN_FILE_INFO				fileInfo;
@@ -257,7 +258,7 @@ DispatchQueryInformation(
 	PDOKAN_OPEN_INFO	openInfo;
 	ULONG				sizeOfEventInfo;
 
-	sizeOfEventInfo = sizeof(EVENT_INFORMATION) - 8 + EventContext->File.BufferLength;
+	sizeOfEventInfo = sizeof(EVENT_INFORMATION) + EventContext->File.BufferLength;
 
 	CheckFileName(EventContext->File.FileName);
 
@@ -265,113 +266,130 @@ DispatchQueryInformation(
 
 	eventInfo = DispatchCommon(
 		EventContext, sizeOfEventInfo, DokanInstance, &fileInfo, &openInfo);
-	
-	eventInfo->BufferLength = EventContext->File.BufferLength;
 
-	DbgPrint("###GetFileInfo %04d\n", openInfo != NULL ? openInfo->EventId : -1);
+	if (eventInfo != NULL)
+	{
 
-	if (DokanInstance->DokanOperations->GetFileInformation) {
-		result = DokanInstance->DokanOperations->GetFileInformation(
-										EventContext->File.FileName,
-										&byHandleFileInfo,
-										&fileInfo);
-	} else {
-		result = -1;
-	}
+		eventInfo->BufferLength = EventContext->File.BufferLength;
 
-	remainingLength = eventInfo->BufferLength;
+		DbgPrint("###GetFileInfo %04d\n", openInfo != NULL ? openInfo->EventId : -1);
 
-	if (result < 0) {
-		eventInfo->Status = STATUS_INVALID_PARAMETER;
-		eventInfo->BufferLength = 0;
-	
-	} else {
+		if (DokanInstance->DokanOperations->GetFileInformation) {
+			result = DokanInstance->DokanOperations->GetFileInformation(
+				EventContext->File.FileName,
+				&byHandleFileInfo,
+				&fileInfo);
+		}
+		else {
+			result = -1;
+		}
 
-		switch(EventContext->File.FileInformationClass) {
-		case FileBasicInformation:
-			//DbgPrint("FileBasicInformation\n");
-			status = DokanFillFileBasicInfo((PVOID)eventInfo->Buffer,
-										&byHandleFileInfo, &remainingLength);
-			break;
+		remainingLength = eventInfo->BufferLength;
 
-		case FileInternalInformation:
-			status = DokanFillInternalInfo((PVOID)eventInfo->Buffer,
-											&byHandleFileInfo, &remainingLength);
-			break;
+		if (result < 0) {
+			eventInfo->Status = STATUS_INVALID_PARAMETER;
+			eventInfo->BufferLength = 0;
 
-		case FileEaInformation:
-			//DbgPrint("FileEaInformation or FileInternalInformation\n");
-			//status = STATUS_NOT_IMPLEMENTED;
-			status = STATUS_SUCCESS;
-			remainingLength -= sizeof(FILE_EA_INFORMATION);
-			break;
+		}
+		else {
 
-		case FileStandardInformation:
-			//DbgPrint("FileStandardInformation\n");
-			status = DokanFillFileStandardInfo((PVOID)eventInfo->Buffer,
-										&byHandleFileInfo, &remainingLength);
-			break;
+			switch (EventContext->File.FileInformationClass) {
+			case FileBasicInformation:
+				//DbgPrint("FileBasicInformation\n");
+				status = DokanFillFileBasicInfo((PVOID)eventInfo->Buffer,
+					&byHandleFileInfo, &remainingLength);
+				break;
 
-		case FileAllInformation:
-			//DbgPrint("FileAllInformation\n");
-			status = DokanFillFileAllInfo((PVOID)eventInfo->Buffer,
-										&byHandleFileInfo, &remainingLength, EventContext);
-			break;
+			case FileInternalInformation:
+				status = DokanFillInternalInfo((PVOID)eventInfo->Buffer,
+					&byHandleFileInfo, &remainingLength);
+				break;
 
-		case FileAlternateNameInformation:
-			status = STATUS_NOT_IMPLEMENTED;
-			break;
+			case FileEaInformation:
+				//DbgPrint("FileEaInformation or FileInternalInformation\n");
+				//status = STATUS_NOT_IMPLEMENTED;
+				status = STATUS_SUCCESS;
+				remainingLength -= sizeof(FILE_EA_INFORMATION);
+				break;
 
-		case FileAttributeTagInformation:
-			status = DokanFillFileAttributeTagInfo((PVOID)eventInfo->Buffer,
-										&byHandleFileInfo, &remainingLength);
-			break;
+			case FileStandardInformation:
+				//DbgPrint("FileStandardInformation\n");
+				status = DokanFillFileStandardInfo((PVOID)eventInfo->Buffer,
+					&byHandleFileInfo, &remainingLength);
+				break;
 
-		case FileCompressionInformation:
-			//DbgPrint("FileAlternateNameInformation or...\n");
-			status = STATUS_NOT_IMPLEMENTED;
-			break;
+			case FileAllInformation:
+				//DbgPrint("FileAllInformation\n");
+				status = DokanFillFileAllInfo((PVOID)eventInfo->Buffer,
+					&byHandleFileInfo, &remainingLength, EventContext);
+				break;
 
-		case FileNameInformation:
-			// this case is not used because driver deal with
-			//DbgPrint("FileNameInformation\n");
-			status = DokanFillFileNameInfo((PVOID)eventInfo->Buffer,
-								&byHandleFileInfo, &remainingLength, EventContext);
-			break;
+			case FileAlternateNameInformation:
+				status = STATUS_NOT_IMPLEMENTED;
+				break;
 
-		case FileNetworkOpenInformation:
-			//DbgPrint("FileNetworkOpenInformation\n");
-			status = DokanFillNetworkOpenInfo((PVOID)eventInfo->Buffer,
-								&byHandleFileInfo, &remainingLength);
-			break;
+			case FileAttributeTagInformation:
+				status = DokanFillFileAttributeTagInfo((PVOID)eventInfo->Buffer,
+					&byHandleFileInfo, &remainingLength);
+				break;
 
-		case FilePositionInformation:
-			// this case is not used because driver deal with
-			//DbgPrint("FilePositionInformation\n");
-			status = DokanFillFilePositionInfo((PVOID)eventInfo->Buffer,
-								&byHandleFileInfo, &remainingLength);
+			case FileCompressionInformation:
+				//DbgPrint("FileAlternateNameInformation or...\n");
+				status = STATUS_NOT_IMPLEMENTED;
+				break;
 
-			break;
-		case FileStreamInformation:
-			//DbgPrint("FileStreamInformation\n");
-			status = STATUS_NOT_IMPLEMENTED;
-			break;
-        default:
+			case FileNameInformation:
+				// this case is not used because driver deal with
+				//DbgPrint("FileNameInformation\n");
+				status = DokanFillFileNameInfo((PVOID)eventInfo->Buffer,
+					&byHandleFileInfo, &remainingLength, EventContext);
+				break;
+
+			case FileNetworkOpenInformation:
+				//DbgPrint("FileNetworkOpenInformation\n");
+				status = DokanFillNetworkOpenInfo((PVOID)eventInfo->Buffer,
+					&byHandleFileInfo, &remainingLength);
+				break;
+
+			case FilePositionInformation:
+				// this case is not used because driver deal with
+				//DbgPrint("FilePositionInformation\n");
+				status = DokanFillFilePositionInfo((PVOID)eventInfo->Buffer,
+					&byHandleFileInfo, &remainingLength);
+
+				break;
+			case FileStreamInformation:
+				//DbgPrint("FileStreamInformation\n");
+				status = STATUS_NOT_IMPLEMENTED;
+				break;
+			default:
 			{
 				DbgPrint("  unknown type:%d\n", EventContext->File.FileInformationClass);
 			}
-            break;
+				status = STATUS_INVALID_PARAMETER;
+				break;
+			}
+
+			eventInfo->Status = status;
+			eventInfo->BufferLength = EventContext->File.BufferLength - remainingLength;
 		}
-	
-		eventInfo->Status = status;
-		eventInfo->BufferLength = EventContext->File.BufferLength - remainingLength;
+
+		// information for FileSystem
+		if (openInfo != NULL)
+		{
+			openInfo->UserContext = fileInfo.Context;
+		}
+
+		SendEventInformation(Handle, eventInfo, sizeOfEventInfo, DokanInstance);
+		free(eventInfo);
 	}
-
-	// information for FileSystem
-	openInfo->UserContext = fileInfo.Context;
-
-	SendEventInformation(Handle, eventInfo, sizeOfEventInfo, DokanInstance);
-	free(eventInfo);
+	else
+	{
+		EVENT_INFORMATION failureEventInfo;
+		DbgPrint("###GetFileInfo: could not allocate eventInfo\n");
+		SetupFailureEventInformation(EventContext, DokanInstance, &failureEventInfo);
+		SendEventInformation(Handle, &failureEventInfo, sizeof(EVENT_INFORMATION), DokanInstance);
+	}
 	return;
 
 }

@@ -77,7 +77,7 @@ typedef struct _DOKAN_CONTROL {
 
 static
 VOID
-DokanDbgPrint(LPCSTR format, ...)
+DokanDbgPrint(_In_ LPCSTR format, ...)
 {
 	char buffer[512];
 	va_list argp;
@@ -92,7 +92,7 @@ DokanDbgPrint(LPCSTR format, ...)
 
 static
 VOID
-DokanDbgPrintW(LPCWSTR format, ...)
+DokanDbgPrintW(_In_ LPCWSTR format, ...)
 {
 	WCHAR buffer[512];
 	va_list argp;
@@ -123,13 +123,13 @@ DokanDbgPrintW(LPCWSTR format, ...)
 
 BOOL DOKANAPI
 DokanServiceInstall(
-	LPCWSTR	ServiceName,
-	DWORD	ServiceType,
-	LPCWSTR ServiceFullPath);
+	_In_ LPCWSTR	ServiceName,
+	_In_ DWORD	ServiceType,
+	_In_ LPCWSTR ServiceFullPath);
 
 BOOL DOKANAPI
 DokanServiceDelete(
-	LPCWSTR	ServiceName);
+	_In_ LPCWSTR	ServiceName);
 
 BOOL DOKANAPI
 DokanNetworkProviderInstall();
@@ -138,10 +138,10 @@ BOOL DOKANAPI
 DokanNetworkProviderUninstall();
 
 BOOL DOKANAPI
-DokanSetDebugMode(ULONG Mode);
+DokanSetDebugMode(_In_ ULONG Mode);
 
 BOOL DOKANAPI
-DokanMountControl(PDOKAN_CONTROL Control);
+DokanMountControl(_In_ PDOKAN_CONTROL Control);
 
 
 #ifdef __cplusplus

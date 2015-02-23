@@ -25,7 +25,7 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 static BOOL
 DokanServiceCheck(
-	LPCWSTR	ServiceName)
+	_In_ LPCWSTR	ServiceName)
 {
 	SC_HANDLE controlHandle;
 	SC_HANDLE serviceHandle;
@@ -55,8 +55,8 @@ DokanServiceCheck(
 
 static BOOL
 DokanServiceControl(
-	LPCWSTR	ServiceName,
-	ULONG	Type)
+	_In_ LPCWSTR	ServiceName,
+	_In_ ULONG		Type)
 {
 	SC_HANDLE controlHandle;
 	SC_HANDLE serviceHandle;
@@ -78,49 +78,63 @@ DokanServiceControl(
 		CloseServiceHandle(controlHandle);
 		return FALSE;
 	}
-	
-	QueryServiceStatus(serviceHandle, &ss);
 
-	if (Type == DOKAN_SERVICE_DELETE) {
-		if (DeleteService(serviceHandle)) {
-			DokanDbgPrintW(L"Service (%s) deleted\n", ServiceName);
-			result = TRUE;
-		} else {
-			DokanDbgPrintW(L"failed to delete service (%s): %d\n", ServiceName, GetLastError());
-			result = FALSE;
-		}
-
-	} else if (ss.dwCurrentState == SERVICE_STOPPED && Type == DOKAN_SERVICE_START) {
-		if (StartService(serviceHandle, 0, NULL)) {
-			DokanDbgPrintW(L"Service (%s) started\n", ServiceName);
-			result = TRUE;
-		} else {
-			DokanDbgPrintW(L"failed to start service (%s): %d\n", ServiceName, GetLastError());
-			result = FALSE;
-		}
-	
-	} else if (ss.dwCurrentState == SERVICE_RUNNING && Type == DOKAN_SERVICE_STOP) {
-
-		if (ControlService(serviceHandle, SERVICE_CONTROL_STOP, &ss)) {
-			DokanDbgPrintW(L"Service (%s) stopped\n", ServiceName);
-			result = TRUE;
-		} else {
-			DokanDbgPrintW(L"failed to stop service (%s): %d\n", ServiceName, GetLastError());
-			result = FALSE;
-		}
+	if (!QueryServiceStatus(serviceHandle, &ss))
+	{
+		DokanDbgPrintW(L"Could not retrieve status of service %s\n", ServiceName);
+		CloseServiceHandle(serviceHandle);
+		CloseServiceHandle(controlHandle);
+		return FALSE;
 	}
+	else
+	{
 
-	CloseServiceHandle(serviceHandle);
-	CloseServiceHandle(controlHandle);
+		if (Type == DOKAN_SERVICE_DELETE) {
+			if (DeleteService(serviceHandle)) {
+				DokanDbgPrintW(L"Service (%s) deleted\n", ServiceName);
+				result = TRUE;
+			}
+			else {
+				DokanDbgPrintW(L"failed to delete service (%s): %d\n", ServiceName, GetLastError());
+				result = FALSE;
+			}
 
-	Sleep(100);
-	return result;
+		}
+		else if (ss.dwCurrentState == SERVICE_STOPPED && Type == DOKAN_SERVICE_START) {
+			if (StartService(serviceHandle, 0, NULL)) {
+				DokanDbgPrintW(L"Service (%s) started\n", ServiceName);
+				result = TRUE;
+			}
+			else {
+				DokanDbgPrintW(L"failed to start service (%s): %d\n", ServiceName, GetLastError());
+				result = FALSE;
+			}
+
+		}
+		else if (ss.dwCurrentState == SERVICE_RUNNING && Type == DOKAN_SERVICE_STOP) {
+
+			if (ControlService(serviceHandle, SERVICE_CONTROL_STOP, &ss)) {
+				DokanDbgPrintW(L"Service (%s) stopped\n", ServiceName);
+				result = TRUE;
+			}
+			else {
+				DokanDbgPrintW(L"failed to stop service (%s): %d\n", ServiceName, GetLastError());
+				result = FALSE;
+			}
+		}
+
+		CloseServiceHandle(serviceHandle);
+		CloseServiceHandle(controlHandle);
+
+		Sleep(100);
+		return result;
+	}
 }
 
 
 
 BOOL DOKANAPI
-DokanMountControl(PDOKAN_CONTROL Control)
+DokanMountControl(_In_ PDOKAN_CONTROL Control)
 {
 	HANDLE pipe;
 	DWORD writtenBytes;
@@ -177,9 +191,9 @@ DokanMountControl(PDOKAN_CONTROL Control)
 
 BOOL DOKANAPI
 DokanServiceInstall(
-	LPCWSTR	ServiceName,
-	DWORD	ServiceType,
-	LPCWSTR ServiceFullPath)
+	_In_ LPCWSTR	ServiceName,
+	_In_ DWORD		ServiceType,
+	_In_ LPCWSTR	ServiceFullPath)
 {
 	SC_HANDLE	controlHandle;
 	SC_HANDLE	serviceHandle;
@@ -221,7 +235,7 @@ DokanServiceInstall(
 
 BOOL DOKANAPI
 DokanServiceDelete(
-	LPCWSTR	ServiceName)
+	_In_ LPCWSTR	ServiceName)
 {
 	if (DokanServiceCheck(ServiceName)) {
 		DokanServiceControl(ServiceName, DOKAN_SERVICE_STOP);
@@ -237,7 +251,7 @@ DokanServiceDelete(
 
 BOOL DOKANAPI
 DokanUnmount(
-	WCHAR	DriveLetter)
+	_In_ WCHAR	DriveLetter)
 {
 	WCHAR mountPoint[] = L"M:\\";
 	mountPoint[0] = DriveLetter;
@@ -247,7 +261,7 @@ DokanUnmount(
 
 BOOL DOKANAPI
 DokanRemoveMountPoint(
-	LPCWSTR MountPoint)
+	_In_ LPCWSTR MountPoint)
 {
 	DOKAN_CONTROL control;
 	BOOL result;
@@ -271,8 +285,8 @@ DokanRemoveMountPoint(
 
 BOOL
 DokanMount(
-	LPCWSTR	MountPoint,
-	LPCWSTR	DeviceName)
+	_In_ LPCWSTR	MountPoint,
+	_In_ LPCWSTR	DeviceName)
 {
 	DOKAN_CONTROL control;
 
@@ -295,38 +309,50 @@ DokanMount(
 BOOL DOKANAPI
 DokanNetworkProviderInstall()
 {
-	HKEY key;
+	LONG statusKey1;
+	LONG statusKey2;
+	HKEY key1;
+	HKEY key2;
 	DWORD position;
 	DWORD type;
 	WCHAR buffer[1024];
 	DWORD buffer_size = sizeof(buffer);
 	ZeroMemory(&buffer, sizeof(buffer));
 
-	RegCreateKeyEx(HKEY_LOCAL_MACHINE, DOKAN_NP_SERVICE_KEY L"\\NetworkProvider", 0, NULL,
-		REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &position);
+	statusKey1 = RegCreateKeyEx(HKEY_LOCAL_MACHINE, DOKAN_NP_SERVICE_KEY L"\\NetworkProvider", 0, NULL,
+		REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key1, &position);
+	if (statusKey1 != ERROR_SUCCESS)
+	{
+		return FALSE;
+	}
+	statusKey2 = RegOpenKeyEx(HKEY_LOCAL_MACHINE, DOKAN_NP_ORDER_KEY, 0, KEY_ALL_ACCESS, &key2);
+	if (statusKey2 != ERROR_SUCCESS)
+	{
+		RegCloseKey(key1);
+		return FALSE;
+	}
 
-	RegSetValueEx(key, L"DeviceName", 0, REG_SZ,
-		(BYTE*)DOKAN_NP_DEVICE_NAME, (wcslen(DOKAN_NP_DEVICE_NAME)+1) * sizeof(WCHAR));
 
-	RegSetValueEx(key, L"Name", 0, REG_SZ,
-		(BYTE*)DOKAN_NP_NAME, (wcslen(DOKAN_NP_NAME)+1) * sizeof(WCHAR));
+	RegSetValueEx(key1, L"DeviceName", 0, REG_SZ,
+		(BYTE*)DOKAN_NP_DEVICE_NAME, (wcslen(DOKAN_NP_DEVICE_NAME) + 1) * sizeof(WCHAR));
 
-	RegSetValueEx(key, L"ProviderPath", 0, REG_SZ,
-		(BYTE*)DOKAN_NP_PATH, (wcslen(DOKAN_NP_PATH)+1) * sizeof(WCHAR));
+	RegSetValueEx(key1, L"Name", 0, REG_SZ,
+		(BYTE*)DOKAN_NP_NAME, (wcslen(DOKAN_NP_NAME) + 1) * sizeof(WCHAR));
 
-    RegCloseKey(key);
+	RegSetValueEx(key1, L"ProviderPath", 0, REG_SZ,
+		(BYTE*)DOKAN_NP_PATH, (wcslen(DOKAN_NP_PATH) + 1) * sizeof(WCHAR));
 
-	RegOpenKeyEx(HKEY_LOCAL_MACHINE, DOKAN_NP_ORDER_KEY, 0, KEY_ALL_ACCESS, &key);
+	RegCloseKey(key1);
 
-	RegQueryValueEx(key, L"ProviderOrder", 0, &type, (BYTE*)&buffer, &buffer_size);
+	RegQueryValueEx(key2, L"ProviderOrder", 0, &type, (BYTE*)&buffer, &buffer_size);
 
 	if (wcsstr(buffer, L",Dokan") == NULL) {
 		wcscat_s(buffer, sizeof(buffer) / sizeof(WCHAR), L",Dokan");
-		RegSetValueEx(key, L"ProviderOrder", 0, REG_SZ,
+		RegSetValueEx(key2, L"ProviderOrder", 0, REG_SZ,
 			(BYTE*)&buffer, (wcslen(buffer) + 1) * sizeof(WCHAR));
 	}
 
-    RegCloseKey(key);
+	RegCloseKey(key2);
 	return TRUE;
 }
 
@@ -334,7 +360,9 @@ DokanNetworkProviderInstall()
 BOOL DOKANAPI
 DokanNetworkProviderUninstall()
 {
-	HKEY key;
+	LONG status;
+	HKEY key1;
+	HKEY key2;
 	DWORD type;
 	WCHAR buffer[1024];
 	WCHAR buffer2[1024];
@@ -343,24 +371,33 @@ DokanNetworkProviderUninstall()
 	ZeroMemory(&buffer, sizeof(buffer));
 	ZeroMemory(&buffer2, sizeof(buffer));
 
-	RegOpenKeyEx(HKEY_LOCAL_MACHINE, DOKAN_NP_SERVICE_KEY, 0, KEY_ALL_ACCESS, &key);
-	RegDeleteKey(key, L"NetworkProvider");
+	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, DOKAN_NP_SERVICE_KEY, 0, KEY_ALL_ACCESS, &key1);
+	if (status != ERROR_SUCCESS)
+	{
+		return FALSE;
+	}
+	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, DOKAN_NP_ORDER_KEY, 0, KEY_ALL_ACCESS, &key2);
+	if (status != ERROR_SUCCESS)
+	{
+		RegCloseKey(key1);
+		return FALSE;
+	}
 
-    RegCloseKey(key);
+	RegDeleteKey(key1, L"NetworkProvider");
 
-	RegOpenKeyEx(HKEY_LOCAL_MACHINE, DOKAN_NP_ORDER_KEY, 0, KEY_ALL_ACCESS, &key);
+    RegCloseKey(key1);
 
-	RegQueryValueEx(key, L"ProviderOrder", 0, &type, (BYTE*)&buffer, &buffer_size);
+	RegQueryValueEx(key2, L"ProviderOrder", 0, &type, (BYTE*)&buffer, &buffer_size);
 
-	if (wcsstr(buffer, L",Dokan") != NULL) {
-		WCHAR* dokan_pos = wcsstr(buffer, L",Dokan");
+	WCHAR* dokan_pos = wcsstr(buffer, L",Dokan");
+	if (dokan_pos != NULL) {
 		wcsncpy_s(buffer2, sizeof(buffer2) / sizeof(WCHAR), buffer, dokan_pos - buffer);
 		wcscat_s(buffer2, sizeof(buffer2) / sizeof(WCHAR), dokan_pos + wcslen(L",Dokan"));
-		RegSetValueEx(key, L"ProviderOrder", 0, REG_SZ,
+		RegSetValueEx(key2, L"ProviderOrder", 0, REG_SZ,
 			(BYTE*)&buffer2, (wcslen(buffer2) + 1) * sizeof(WCHAR));
 	}
 
-    RegCloseKey(key);
+    RegCloseKey(key2);
 
 	return TRUE;
 }

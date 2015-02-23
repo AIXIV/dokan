@@ -24,9 +24,9 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 VOID
 DispatchLock(
-	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance)
+	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE	DokanInstance)
 {
 	DOKAN_FILE_INFO		fileInfo;
 	PEVENT_INFORMATION	eventInfo;
@@ -39,50 +39,64 @@ DispatchLock(
 	eventInfo = DispatchCommon(
 		EventContext, sizeOfEventInfo, DokanInstance, &fileInfo, &openInfo);
 
-	DbgPrint("###Lock %04d\n", openInfo != NULL ? openInfo->EventId : -1);
+	if (eventInfo != NULL)
+	{
 
-	eventInfo->Status = STATUS_NOT_IMPLEMENTED;
+		DbgPrint("###Lock %04d\n", openInfo != NULL ? openInfo->EventId : -1);
 
-	switch (EventContext->MinorFunction) {
-	case IRP_MN_LOCK:
-		if (DokanInstance->DokanOperations->LockFile) {
+		eventInfo->Status = STATUS_NOT_IMPLEMENTED;
 
-			status = DokanInstance->DokanOperations->LockFile(
-						EventContext->Lock.FileName,
-						EventContext->Lock.ByteOffset.QuadPart,
-						EventContext->Lock.Length.QuadPart,
-						//EventContext->Lock.Key,
-						&fileInfo);
+		switch (EventContext->MinorFunction) {
+		case IRP_MN_LOCK:
+			if (DokanInstance->DokanOperations->LockFile) {
 
-			eventInfo->Status = status < 0 ?
+				status = DokanInstance->DokanOperations->LockFile(
+					EventContext->Lock.FileName,
+					EventContext->Lock.ByteOffset.QuadPart,
+					EventContext->Lock.Length.QuadPart,
+					//EventContext->Lock.Key,
+					&fileInfo);
+
+				eventInfo->Status = status < 0 ?
 				STATUS_LOCK_NOT_GRANTED : STATUS_SUCCESS;
-		}
-		break;
-	case IRP_MN_UNLOCK_ALL:
-		break;
-	case IRP_MN_UNLOCK_ALL_BY_KEY:
-		break;
-	case IRP_MN_UNLOCK_SINGLE:
-		if (DokanInstance->DokanOperations->UnlockFile) {
-		
-			status = DokanInstance->DokanOperations->UnlockFile(
-						EventContext->Lock.FileName,
-						EventContext->Lock.ByteOffset.QuadPart,
-						EventContext->Lock.Length.QuadPart,
-						//EventContext->Lock.Key,
-						&fileInfo);
+			}
+			break;
+		case IRP_MN_UNLOCK_ALL:
+			break;
+		case IRP_MN_UNLOCK_ALL_BY_KEY:
+			break;
+		case IRP_MN_UNLOCK_SINGLE:
+			if (DokanInstance->DokanOperations->UnlockFile) {
 
-			eventInfo->Status = STATUS_SUCCESS; // at any time return success ?
+				status = DokanInstance->DokanOperations->UnlockFile(
+					EventContext->Lock.FileName,
+					EventContext->Lock.ByteOffset.QuadPart,
+					EventContext->Lock.Length.QuadPart,
+					//EventContext->Lock.Key,
+					&fileInfo);
+
+				eventInfo->Status = STATUS_SUCCESS; // at any time return success ?
+			}
+			break;
+		default:
+			DbgPrint("unkown lock function %d\n", EventContext->MinorFunction);
 		}
-		break;
-	default:
-		DbgPrint("unkown lock function %d\n", EventContext->MinorFunction);
+
+		if (openInfo != NULL)
+		{
+			openInfo->UserContext = fileInfo.Context;
+		}
+
+		SendEventInformation(Handle, eventInfo, sizeOfEventInfo, DokanInstance);
+
+		free(eventInfo);
 	}
-
-	openInfo->UserContext = fileInfo.Context;
-
-	SendEventInformation(Handle, eventInfo, sizeOfEventInfo, DokanInstance);
-
-	free(eventInfo);
+	else
+	{
+		EVENT_INFORMATION failureEventInfo;
+		DbgPrint("###Lock: could not allocate eventInfo\n");
+		SetupFailureEventInformation(EventContext, DokanInstance, &failureEventInfo);
+		SendEventInformation(Handle, &failureEventInfo, sizeof(EVENT_INFORMATION), DokanInstance);
+	}
 	return;
 }

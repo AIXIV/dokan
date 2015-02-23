@@ -25,9 +25,9 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 VOID
 DispatchClose(
-	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance)
+	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE	DokanInstance)
 {
 	PEVENT_INFORMATION		eventInfo;
 	DOKAN_FILE_INFO			fileInfo;	
@@ -39,27 +39,36 @@ DispatchClose(
 	eventInfo = DispatchCommon(
 		EventContext, sizeOfEventInfo, DokanInstance, &fileInfo, &openInfo);
 
-	eventInfo->Status = STATUS_SUCCESS; // return success at any case
+	if (eventInfo != NULL)
+	{
+		eventInfo->Status = STATUS_SUCCESS; // return success at any case
 
-	DbgPrint("###Close %04d\n", openInfo != NULL ? openInfo->EventId : -1);
+		DbgPrint("###Close %04d\n", openInfo != NULL ? openInfo->EventId : -1);
 
-	if (DokanInstance->DokanOperations->CloseFile) {
-		// ignore return value
-		DokanInstance->DokanOperations->CloseFile(
-			EventContext->Close.FileName, &fileInfo);
+		if (DokanInstance->DokanOperations->CloseFile) {
+			// ignore return value
+			DokanInstance->DokanOperations->CloseFile(
+				EventContext->Close.FileName, &fileInfo);
+		}
+
+		// do not send it to the driver
+		//SendEventInformation(Handle, eventInfo, length);
+
+		if (openInfo != NULL) {
+			EnterCriticalSection(&DokanInstance->CriticalSection);
+			openInfo->OpenCount--;
+			LeaveCriticalSection(&DokanInstance->CriticalSection);
+		}
+		ReleaseDokanOpenInfo(eventInfo, DokanInstance);
+		free(eventInfo);
 	}
-
-	// do not send it to the driver
-	//SendEventInformation(Handle, eventInfo, length);
-
-	if (openInfo != NULL) {
-		EnterCriticalSection(&DokanInstance->CriticalSection);
-		openInfo->OpenCount--;
-		LeaveCriticalSection(&DokanInstance->CriticalSection);
+	else
+	{
+		EVENT_INFORMATION failureEventInfo;
+		DbgPrint("###Close: could not allocate eventInfo\n");
+		SetupFailureEventInformation(EventContext, DokanInstance, &failureEventInfo);
+		SendEventInformation(Handle, &failureEventInfo, sizeof(EVENT_INFORMATION), DokanInstance);
 	}
-	ReleaseDokanOpenInfo(eventInfo, DokanInstance);
-	free(eventInfo);
-
 	return;
 }
 

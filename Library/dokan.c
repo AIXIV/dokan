@@ -45,30 +45,45 @@ BOOL	g_UseStdErr = FALSE;
 CRITICAL_SECTION	g_InstanceCriticalSection;
 LIST_ENTRY			g_InstanceList;	
 
+_Ret_maybenull_
 PDOKAN_INSTANCE 
 NewDokanInstance()
 {
 	PDOKAN_INSTANCE instance = (PDOKAN_INSTANCE)malloc(sizeof(DOKAN_INSTANCE));
-	ZeroMemory(instance, sizeof(DOKAN_INSTANCE));
+	if (instance != NULL)
+	{
+		ZeroMemory(instance, sizeof(DOKAN_INSTANCE));
 
 #if _MSC_VER < 1300
-	InitializeCriticalSection(&instance->CriticalSection);
+		if (InitializeCriticalSection(&instance->CriticalSection))
 #else
-	InitializeCriticalSectionAndSpinCount(
-		&instance->CriticalSection, 0x80000400);
+		if (InitializeCriticalSectionAndSpinCount(&instance->CriticalSection, 0x80000400))
 #endif
+		{
+			InitializeListHead(&instance->ListEntry);
 
-	InitializeListHead(&instance->ListEntry);
+			EnterCriticalSection(&g_InstanceCriticalSection);
+			InsertTailList(&g_InstanceList, &instance->ListEntry);
+			LeaveCriticalSection(&g_InstanceCriticalSection);
 
-	EnterCriticalSection(&g_InstanceCriticalSection);
-	InsertTailList(&g_InstanceList, &instance->ListEntry);
-	LeaveCriticalSection(&g_InstanceCriticalSection);
-
-	return instance;
+			return instance;
+		}
+		else
+		{
+			DbgPrint("could not initialize critical section for instance\n");
+			free(instance);
+			return NULL;
+		}
+	}
+	else
+	{
+		DbgPrint("could not allocate Dokan instance\n");
+		return NULL;
+	}
 }
 
 VOID 
-DeleteDokanInstance(PDOKAN_INSTANCE Instance)
+DeleteDokanInstance(_In_ PDOKAN_INSTANCE Instance)
 {
 	DeleteCriticalSection(&Instance->CriticalSection);
 
@@ -80,14 +95,14 @@ DeleteDokanInstance(PDOKAN_INSTANCE Instance)
 }
 
 BOOL
-IsValidDriveLetter(WCHAR DriveLetter)
+IsValidDriveLetter(_In_ WCHAR DriveLetter)
 {
 	return (L'd' <= DriveLetter && DriveLetter <= L'z') ||
 		(L'D' <= DriveLetter && DriveLetter <= L'Z');
 }
 
 int
-CheckMountPoint(LPCWSTR	MountPoint)
+CheckMountPoint(_In_ LPCWSTR	MountPoint)
 {
 	ULONG	length = wcslen(MountPoint);
 
@@ -117,7 +132,7 @@ CheckMountPoint(LPCWSTR	MountPoint)
 }
 
 int DOKANAPI
-DokanMain(PDOKAN_OPTIONS DokanOptions, PDOKAN_OPERATIONS DokanOperations)
+DokanMain(_In_ PDOKAN_OPTIONS DokanOptions, _In_ PDOKAN_OPERATIONS DokanOperations)
 {
 	ULONG	threadNum = 0;
 	ULONG	i;
@@ -185,6 +200,13 @@ DokanMain(PDOKAN_OPTIONS DokanOptions, PDOKAN_OPERATIONS DokanOperations)
 	DbgPrint("device opened\n");
 
 	instance = NewDokanInstance();
+	if (instance == NULL)
+	{
+		DbgPrint("could not create dokan instance\n");
+		CloseHandle(device);
+		return DOKAN_START_ERROR;
+	}
+
 	instance->DokanOptions = DokanOptions;
 	instance->DokanOperations = DokanOperations;
 	if (useMountPoint) {
@@ -255,7 +277,7 @@ DokanMain(PDOKAN_OPTIONS DokanOptions, PDOKAN_OPERATIONS DokanOperations)
 }
 
 LPCWSTR
-GetRawDeviceName(LPCWSTR	DeviceName)
+GetRawDeviceName(_In_ LPCWSTR	DeviceName)
 {
 	static WCHAR rawDeviceName[MAX_PATH];
 	wcscpy_s(rawDeviceName, MAX_PATH, L"\\\\.");
@@ -265,16 +287,22 @@ GetRawDeviceName(LPCWSTR	DeviceName)
 
 DWORD WINAPI
 DokanLoop(
-   PDOKAN_INSTANCE DokanInstance
+   _In_ PDOKAN_INSTANCE DokanInstance
 	)
 {
 	HANDLE	device;
-	char	buffer[EVENT_CONTEXT_MAX_SIZE];
+	char*	buffer;
+	//char	buffer[EVENT_CONTEXT_MAX_SIZE];
 	ULONG	count = 0;
 	BOOL	status;
 	ULONG	returnedLength;
 	DWORD	result = 0;
 
+	buffer = (char*)malloc(EVENT_CONTEXT_MAX_SIZE);
+	if (buffer == NULL)
+	{
+		return DOKAN_MOUNT_ERROR;
+	}
 	RtlZeroMemory(buffer, sizeof(buffer));
 
 	device = CreateFile(
@@ -386,10 +414,10 @@ DokanLoop(
 
 VOID
 SendEventInformation(
-	HANDLE				Handle,
-	PEVENT_INFORMATION	EventInfo,
-	ULONG				EventLength,
-	PDOKAN_INSTANCE		DokanInstance)
+	_In_ HANDLE					Handle,
+	_In_ PEVENT_INFORMATION		EventInfo,
+	_In_ ULONG					EventLength,
+	_In_opt_ PDOKAN_INSTANCE	DokanInstance)
 {
 	BOOL	status;
 	ULONG	returnedLength;
@@ -420,7 +448,7 @@ SendEventInformation(
 
 VOID
 CheckFileName(
-	LPWSTR	FileName)
+	_In_ LPWSTR	FileName)
 {
 	// if the begining of file name is "\\",
 	// replace it with "\"
@@ -433,62 +461,84 @@ CheckFileName(
 	}
 }
 
+VOID
+SetupFailureEventInformation(
+_In_ PEVENT_CONTEXT			EventContext,
+_In_ PDOKAN_INSTANCE		DokanInstance,
+_Out_ PEVENT_INFORMATION	EventInfo
+)
+{
+	PDOKAN_OPEN_INFO openInfo = GetDokanOpenInfo(EventContext, DokanInstance);
+	RtlZeroMemory(EventInfo, sizeof(EVENT_INFORMATION));
+	EventInfo->BufferLength = 0;
+	EventInfo->SerialNumber = EventContext->SerialNumber;
+	EventInfo->Context = (ULONG64)(openInfo);
+	EventInfo->Status = STATUS_BUFFER_OVERFLOW;
+}
 
-
+_Success_(return != NULL)
+_Ret_maybenull_
 PEVENT_INFORMATION
 DispatchCommon(
-	PEVENT_CONTEXT		EventContext,
-	ULONG				SizeOfEventInfo,
-	PDOKAN_INSTANCE		DokanInstance,
-	PDOKAN_FILE_INFO	DokanFileInfo,
-	PDOKAN_OPEN_INFO*	DokanOpenInfo)
+	_In_ PEVENT_CONTEXT								EventContext,
+	_In_ ULONG										SizeOfEventInfo,
+	_In_ PDOKAN_INSTANCE							DokanInstance,
+	_Out_ PDOKAN_FILE_INFO							DokanFileInfo,
+	_Outptr_result_maybenull_ PDOKAN_OPEN_INFO*		DokanOpenInfo)
 {
 	PEVENT_INFORMATION	eventInfo = (PEVENT_INFORMATION)malloc(SizeOfEventInfo);
+	if (eventInfo != NULL)
+	{
+		RtlZeroMemory(eventInfo, SizeOfEventInfo);
+		RtlZeroMemory(DokanFileInfo, sizeof(DOKAN_FILE_INFO));
 
-	RtlZeroMemory(eventInfo, SizeOfEventInfo);
-	RtlZeroMemory(DokanFileInfo, sizeof(DOKAN_FILE_INFO));
+		eventInfo->BufferLength = 0;
+		eventInfo->SerialNumber = EventContext->SerialNumber;
 
-	eventInfo->BufferLength = 0;
-	eventInfo->SerialNumber = EventContext->SerialNumber;
+		DokanFileInfo->ProcessId = EventContext->ProcessId;
+		DokanFileInfo->DokanOptions = DokanInstance->DokanOptions;
+		if (EventContext->FileFlags & DOKAN_DELETE_ON_CLOSE) {
+			DokanFileInfo->DeleteOnClose = 1;
+		}
+		if (EventContext->FileFlags & DOKAN_PAGING_IO) {
+			DokanFileInfo->PagingIo = 1;
+		}
+		if (EventContext->FileFlags & DOKAN_WRITE_TO_END_OF_FILE) {
+			DokanFileInfo->WriteToEndOfFile = 1;
+		}
+		if (EventContext->FileFlags & DOKAN_SYNCHRONOUS_IO) {
+			DokanFileInfo->SynchronousIo = 1;
+		}
+		if (EventContext->FileFlags & DOKAN_NOCACHE) {
+			DokanFileInfo->Nocache = 1;
+		}
 
-	DokanFileInfo->ProcessId	= EventContext->ProcessId;
-	DokanFileInfo->DokanOptions = DokanInstance->DokanOptions;
-	if (EventContext->FileFlags & DOKAN_DELETE_ON_CLOSE) {
-		DokanFileInfo->DeleteOnClose = 1;
-	}
-	if (EventContext->FileFlags & DOKAN_PAGING_IO) {
-		DokanFileInfo->PagingIo = 1;
-	}
-	if (EventContext->FileFlags & DOKAN_WRITE_TO_END_OF_FILE) {
-		DokanFileInfo->WriteToEndOfFile = 1;
-	}
-	if (EventContext->FileFlags & DOKAN_SYNCHRONOUS_IO) {
-		DokanFileInfo->SynchronousIo = 1;
-	}
-	if (EventContext->FileFlags & DOKAN_NOCACHE) {
-		DokanFileInfo->Nocache = 1;
-	}
+		*DokanOpenInfo = GetDokanOpenInfo(EventContext, DokanInstance);
+		if (*DokanOpenInfo == NULL) {
+			DbgPrint("error openInfo is NULL\n");
+			return eventInfo;
+		}
+		else
+		{
+			DokanFileInfo->Context = (ULONG64)(*DokanOpenInfo)->UserContext;
+			DokanFileInfo->IsDirectory = (UCHAR)(*DokanOpenInfo)->IsDirectory;
+			DokanFileInfo->DokanContext = (ULONG64)(*DokanOpenInfo);
+		}
 
-	*DokanOpenInfo = GetDokanOpenInfo(EventContext, DokanInstance);
-	if (*DokanOpenInfo == NULL) {
-		DbgPrint("error openInfo is NULL\n");
-		return eventInfo;
+		eventInfo->Context = (ULONG64)(*DokanOpenInfo);
+		}
+	else
+	{
+		DbgPrint("Could not allocate eventInfo\n");
 	}
-
-	DokanFileInfo->Context		= (ULONG64)(*DokanOpenInfo)->UserContext;
-	DokanFileInfo->IsDirectory	= (UCHAR)(*DokanOpenInfo)->IsDirectory;
-	DokanFileInfo->DokanContext = (ULONG64)(*DokanOpenInfo);
-
-	eventInfo->Context = (ULONG64)(*DokanOpenInfo);
 
 	return eventInfo;
 }
 
-
 PDOKAN_OPEN_INFO
 GetDokanOpenInfo(
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance)
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE	DokanInstance)
 {
 	PDOKAN_OPEN_INFO openInfo;
 	EnterCriticalSection(&DokanInstance->CriticalSection);
@@ -506,8 +556,8 @@ GetDokanOpenInfo(
 
 VOID
 ReleaseDokanOpenInfo(
-	PEVENT_INFORMATION	EventInformation,
-	PDOKAN_INSTANCE		DokanInstance)
+	_In_ PEVENT_INFORMATION	EventInformation,
+	_In_ PDOKAN_INSTANCE	DokanInstance)
 {
 	PDOKAN_OPEN_INFO openInfo;
 	EnterCriticalSection(&DokanInstance->CriticalSection);
@@ -531,9 +581,9 @@ ReleaseDokanOpenInfo(
 
 VOID
 DispatchUnmount(
-	HANDLE				Handle,
-	PEVENT_CONTEXT		EventContext,
-	PDOKAN_INSTANCE		DokanInstance)
+	_In_ HANDLE				Handle,
+	_In_ PEVENT_CONTEXT		EventContext,
+	_In_ PDOKAN_INSTANCE		DokanInstance)
 {
 	DOKAN_FILE_INFO			fileInfo;
 	static int count = 0;
@@ -566,7 +616,7 @@ DispatchUnmount(
 // ask driver to release all pending IRP to prepare for Unmount.
 BOOL
 SendReleaseIRP(
-	LPCWSTR	DeviceName)
+	_In_ LPCWSTR	DeviceName)
 {
 	ULONG	returnedLength;
 
@@ -590,7 +640,7 @@ SendReleaseIRP(
 
 
 BOOL
-DokanStart(PDOKAN_INSTANCE Instance)
+DokanStart(_In_ PDOKAN_INSTANCE Instance)
 {
 	EVENT_START			eventStart;
 	EVENT_DRIVER_INFO	driverInfo;
@@ -645,7 +695,7 @@ DokanStart(PDOKAN_INSTANCE Instance)
 
 BOOL
 DokanSetDebugMode(
-	ULONG	Mode)
+	_In_ ULONG	Mode)
 {
 	ULONG returnedLength;
 	return SendToDevice(
@@ -661,13 +711,13 @@ DokanSetDebugMode(
 
 BOOL
 SendToDevice(
-	LPCWSTR	DeviceName,
-	DWORD	IoControlCode,
-	PVOID	InputBuffer,
-	ULONG	InputLength,
-	PVOID	OutputBuffer,
-	ULONG	OutputLength,
-	PULONG	ReturnedLength)
+	_In_ LPCWSTR		DeviceName,
+	_In_ DWORD			IoControlCode,
+	_In_opt_ PVOID		InputBuffer,
+	_In_ ULONG			InputLength,
+	_Out_opt_ PVOID		OutputBuffer,
+	_In_ ULONG			OutputLength,
+	_Out_opt_ PULONG	ReturnedLength)
 {
 	HANDLE	device;
 	BOOL	status;
@@ -713,18 +763,23 @@ SendToDevice(
 
 
 BOOL WINAPI DllMain(
-	HINSTANCE	Instance,
-	DWORD		Reason,
-	LPVOID		Reserved)
+	_In_ HINSTANCE	Instance,
+	_In_ DWORD		Reason,
+	_In_ LPVOID		Reserved)
 {
 	switch(Reason) {
 		case DLL_PROCESS_ATTACH:
 			{
 #if _MSC_VER < 1300
-				InitializeCriticalSection(&g_InstanceCriticalSection);
+				if (!InitializeCriticalSection(&g_InstanceCriticalSection))
+				{
+					return FALSE;
+				}
 #else
-				InitializeCriticalSectionAndSpinCount(
-					&g_InstanceCriticalSection, 0x80000400);
+				if (!InitializeCriticalSectionAndSpinCount(&g_InstanceCriticalSection, 0x80000400))
+				{
+					return FALSE;
+				}
 #endif
 				
 				InitializeListHead(&g_InstanceList);

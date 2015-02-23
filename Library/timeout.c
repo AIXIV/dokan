@@ -22,14 +22,14 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "dokani.h"
 
 BOOL DOKANAPI
-DokanResetTimeout(ULONG Timeout, PDOKAN_FILE_INFO FileInfo)
+DokanResetTimeout(_In_ ULONG Timeout, _In_ PDOKAN_FILE_INFO FileInfo)
 {
 	BOOL	status;
 	ULONG	returnedLength;
 	PDOKAN_INSTANCE		instance;
 	PDOKAN_OPEN_INFO	openInfo;
 	PEVENT_CONTEXT		eventContext;
-	PEVENT_INFORMATION	eventInfo;
+	EVENT_INFORMATION	eventInfo;
 	ULONG	eventInfoSize = sizeof(EVENT_INFORMATION);
 
 	openInfo = (PDOKAN_OPEN_INFO)FileInfo->DokanContext;
@@ -47,28 +47,27 @@ DokanResetTimeout(ULONG Timeout, PDOKAN_FILE_INFO FileInfo)
 		return FALSE;
 	}
 
-	eventInfo = (PEVENT_INFORMATION)malloc(eventInfoSize);
-	RtlZeroMemory(eventInfo, eventInfoSize);
+	RtlZeroMemory(&eventInfo, eventInfoSize);
 
-	eventInfo->SerialNumber = eventContext->SerialNumber;
-	eventInfo->ResetTimeout.Timeout = Timeout;
+	eventInfo.SerialNumber = eventContext->SerialNumber;
+	eventInfo.ResetTimeout.Timeout = Timeout;
 
 	status = SendToDevice(
 				GetRawDeviceName(instance->DeviceName),
 				IOCTL_RESET_TIMEOUT,
-				eventInfo,
+				&eventInfo,
 				eventInfoSize,
 				NULL,
 				0,
 				&returnedLength);
-	free(eventInfo);
+
 	return status;
 }
 
 
 DWORD WINAPI
 DokanKeepAlive(
-	PDOKAN_INSTANCE DokanInstance)
+	_In_ PDOKAN_INSTANCE DokanInstance)
 {
 	HANDLE	device;
 	ULONG	ReturnedLength;
