@@ -76,7 +76,7 @@ int ShowUsage()
 	return -1;
 }
 
-int Unmount(LPCWSTR	MountPoint, BOOL ForceUnmount)
+int Unmount(_In_ LPCWSTR	MountPoint, _In_ BOOL ForceUnmount)
 {
 	int status = 0;
 	DOKAN_CONTROL control;
@@ -122,7 +122,7 @@ int Unmount(LPCWSTR	MountPoint, BOOL ForceUnmount)
 		towlower((argv)[(index)][1]) : L'\0')
 
 int __cdecl
-wmain(int argc, PWCHAR argv[])
+wmain(_In_ int argc, _In_ PWCHAR argv[])
 {
 	WCHAR	driverFullPath[MAX_PATH];
 	WCHAR	mounterFullPath[MAX_PATH];
@@ -130,7 +130,12 @@ wmain(int argc, PWCHAR argv[])
 
 	//setlocale(LC_ALL, "");
 
-    GetModuleFileName(NULL, mounterFullPath, MAX_PATH);
+	if (!GetModuleFileName(NULL, mounterFullPath, MAX_PATH))
+	{
+		fprintf(stderr, "could not retrieve the applications parent directory\n");
+		return -1;
+	}
+
 
 	// search the last "\" (remove own file name, leaves only path)
     WCHAR* lastSlash = wcsrchr(mounterFullPath, L'\\');
