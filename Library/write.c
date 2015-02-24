@@ -49,7 +49,7 @@ SendWriteRequest(
 
 	if ( !status ) {
 		DWORD errorCode = GetLastError();
-		DbgPrint("Ioctl failed with code %d\n", errorCode );
+		DbgPrint("WriteRequest: Ioctl failed with code %d\n", errorCode );
 	}
 
 	DbgPrint("SendWriteRequest got %d bytes\n", returnedLength);

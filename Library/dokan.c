@@ -301,8 +301,11 @@ DokanLoop(
 	buffer = (char*)malloc(EVENT_CONTEXT_MAX_SIZE);
 	if (buffer == NULL)
 	{
-		return DOKAN_MOUNT_ERROR;
+		result = -1;
+		_endthreadex(result);
+		return result;
 	}
+
 	RtlZeroMemory(buffer, sizeof(buffer));
 
 	device = CreateFile(
@@ -331,13 +334,13 @@ DokanLoop(
 					NULL,				// Input Buffer to driver.
 					0,					// Length of input buffer in bytes.
 					buffer,             // Output Buffer from driver.
-					sizeof(buffer),		// Length of output buffer in bytes.
+					EVENT_CONTEXT_MAX_SIZE,		// Length of output buffer in bytes.
 					&returnedLength,	// Bytes placed in buffer.
 					NULL                // synchronous call
 					);
 
 		if (!status) {
-			DbgPrint("Ioctl failed with code %d\n", GetLastError());
+			DbgPrint("DokanLoop: Ioctl failed with code %d\n", GetLastError());
 			result = -1;
 			break;
 		}
@@ -405,6 +408,8 @@ DokanLoop(
 		}
 	}
 
+	free(buffer);
+
 	CloseHandle(device);
 	_endthreadex(result);
 	return result;
@@ -441,7 +446,7 @@ SendEventInformation(
 
 	if (!status) {
 		DWORD errorCode = GetLastError();
-		DbgPrint("Dokan Error: Ioctl failed with code %d\n", errorCode );
+		DbgPrint("SendEventInformation: Ioctl failed with code %d\n", errorCode );
 	}
 }
 
@@ -754,7 +759,7 @@ SendToDevice(
 	CloseHandle(device);
 
 	if (!status) {
-		DbgPrint("DokanError: Ioctl failed with code %d\n", GetLastError());
+		DbgPrint("SendToDevice: Ioctl failed with code %d\n", GetLastError());
 		return FALSE;
 	}
 
