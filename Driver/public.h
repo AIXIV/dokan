@@ -271,7 +271,7 @@ typedef struct _EVENT_INFORMATION {
 	};
 	ULONG64		Context;
 	ULONG		BufferLength;
-	UCHAR		Buffer[8];
+	UCHAR		Buffer[];
 
 } EVENT_INFORMATION, *PEVENT_INFORMATION;
 
