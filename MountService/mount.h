@@ -39,12 +39,12 @@ typedef struct _MOUNT_ENTRY {
 
 BOOL
 DokanControlMount(
-	LPCWSTR	MountPoint,
-	LPCWSTR	DeivceName);
+	_In_ LPCWSTR	MountPoint,
+	_In_ LPCWSTR	DeviceName);
 
 BOOL
 DokanControlUnmount(
-	LPCWSTR MountPoint);
+	_In_ LPCWSTR MountPoint);
 
 #ifdef __cplusplus
 }

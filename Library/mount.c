@@ -152,15 +152,15 @@ DokanMountControl(_In_ PDOKAN_CONTROL Control)
 		error = GetLastError();
 		if (error == ERROR_PIPE_BUSY) {
 			if (!WaitNamedPipe(DOKAN_CONTROL_PIPE, NMPWAIT_USE_DEFAULT_WAIT)) {
-				DbgPrint("DokanMounter service : ERROR_PIPE_BUSY\n");
+				DbgPrint("%s: ERROR_PIPE_BUSY\n", DOKAN_MOUNTER_SERVICE);
 				return FALSE;
 			}
 			continue;
 		} else if (error == ERROR_ACCESS_DENIED) {
-			DbgPrint("failed to connect DokanMounter service: access denied\n");
+			DbgPrint("failed to connect to %s: access denied\n", DOKAN_MOUNTER_SERVICE);
 			return FALSE;
 		} else {
-			DbgPrint("failed to connect DokanMounter service: %d\n", GetLastError());
+			DbgPrint("failed to connect to %s: %d\n", DOKAN_MOUNTER_SERVICE, GetLastError());
 			return FALSE;
 		}
 	}

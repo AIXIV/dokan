@@ -57,14 +57,14 @@ typedef struct _REPARSE_DATA_BUFFER {
 
 BOOL
 CreateMountPoint(
-	LPCWSTR	MountPoint,
-	LPCWSTR	DeviceName)
+	_In_ LPCWSTR	MountPoint,
+	_In_ LPCWSTR	DeviceName)
 {
 	HANDLE handle;
 	PREPARSE_DATA_BUFFER reparseData;
 	USHORT	bufferLength;
 	USHORT	targetLength;
-	BOOL	result;
+	BOOL	result = FALSE;
 	ULONG	resultLength;
 	WCHAR	targetDeviceName[MAX_PATH] =  L"\\??";
 
@@ -76,7 +76,7 @@ CreateMountPoint(
 		FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, NULL);
 
 	if (handle == INVALID_HANDLE_VALUE) {
-		DbgPrintW(L"CreateFile failed: %s (%d)\n", MountPoint, GetLastError());
+		DbgPrintW(L"CreateMountPoint: CreateFile failed: %s (%d)\n", MountPoint, GetLastError());
 		return FALSE;
 	}
 
@@ -86,6 +86,12 @@ CreateMountPoint(
 
 	reparseData = malloc(bufferLength);
 
+	if (reparseData == NULL)
+	{
+		CloseHandle(handle);
+		DbgPrintW(L"CreateMountPoint: Could not allocate reparseData\n");
+		return FALSE;
+	}
 	ZeroMemory(reparseData, bufferLength);
 
 	reparseData->ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
@@ -99,17 +105,17 @@ CreateMountPoint(
 	RtlCopyMemory(reparseData->MountPointReparseBuffer.PathBuffer, targetDeviceName, targetLength);
 
 	result = DeviceIoControl(
-				handle,
-				FSCTL_SET_REPARSE_POINT,
-				reparseData,
-				bufferLength,
-				NULL,
-				0,
-				&resultLength,
-				NULL);
-	
-	CloseHandle(handle);
+		handle,
+		FSCTL_SET_REPARSE_POINT,
+		reparseData,
+		bufferLength,
+		NULL,
+		0,
+		&resultLength,
+		NULL);
+
 	free(reparseData);
+	CloseHandle(handle);
 
 	if (result) {
 		DbgPrintW(L"CreateMountPoint %s -> %s success\n",
@@ -123,7 +129,7 @@ CreateMountPoint(
 
 BOOL
 DeleteMountPoint(
-	LPCWSTR	MountPoint)
+	_In_ LPCWSTR	MountPoint)
 {
 	HANDLE	handle;
 	BOOL	result;
@@ -163,8 +169,8 @@ DeleteMountPoint(
 
 BOOL
 CreateDriveLetter(
-	WCHAR		DriveLetter,
-	LPCWSTR	DeviceName)
+	_In_ WCHAR		DriveLetter,
+	_In_ LPCWSTR	DeviceName)
 {
 	WCHAR   dosDevice[] = L"\\\\.\\C:";
 	WCHAR   driveName[] = L"C:";
@@ -220,8 +226,8 @@ CreateDriveLetter(
 
 BOOL
 DokanControlMount(
-	LPCWSTR	MountPoint,
-	LPCWSTR	DeviceName)
+	_In_ LPCWSTR	MountPoint,
+	_In_ LPCWSTR	DeviceName)
 {
 	ULONG length = wcslen(MountPoint);
 
@@ -237,7 +243,7 @@ DokanControlMount(
 
 BOOL
 DokanControlUnmount(
-	LPCWSTR	MountPoint)
+	_In_ LPCWSTR	MountPoint)
 {
     
 	ULONG	length = wcslen(MountPoint);

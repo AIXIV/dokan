@@ -41,7 +41,7 @@ BOOL g_DebugMode = TRUE;
 BOOL g_UseStdErr = FALSE;
 
 PMOUNT_ENTRY
-InsertMountEntry(PDOKAN_CONTROL DokanControl)
+InsertMountEntry(_In_ PDOKAN_CONTROL DokanControl)
 {
 	PMOUNT_ENTRY	mountEntry;
 	mountEntry = malloc(sizeof(MOUNT_ENTRY));
@@ -61,17 +61,15 @@ InsertMountEntry(PDOKAN_CONTROL DokanControl)
 }
 
 VOID
-RemoveMountEntry(PMOUNT_ENTRY MountEntry)
+RemoveMountEntry(_In_ PMOUNT_ENTRY MountEntry)
 {
 	EnterCriticalSection(&g_CriticalSection);
 	RemoveEntryList(&MountEntry->ListEntry);
 	LeaveCriticalSection(&g_CriticalSection);
-
-	free(MountEntry);
 }
 
 PMOUNT_ENTRY
-FindMountEntry(PDOKAN_CONTROL	DokanControl)
+FindMountEntry(_In_ PDOKAN_CONTROL	DokanControl)
 {
 	PLIST_ENTRY		listEntry;
     PMOUNT_ENTRY	mountEntry = NULL;
@@ -111,7 +109,7 @@ FindMountEntry(PDOKAN_CONTROL	DokanControl)
 }
 
 VOID
-DokanControlFind(PDOKAN_CONTROL Control)
+DokanControlFind(_Inout_ PDOKAN_CONTROL Control)
 {
 	PLIST_ENTRY		listEntry;
 	PMOUNT_ENTRY	mountEntry;
@@ -129,7 +127,7 @@ DokanControlFind(PDOKAN_CONTROL Control)
 }
 
 VOID
-DokanControlList(PDOKAN_CONTROL Control)
+DokanControlList(_Inout_ PDOKAN_CONTROL Control)
 {
 	PLIST_ENTRY		listEntry;
 	PMOUNT_ENTRY	mountEntry;
@@ -153,7 +151,7 @@ DokanControlList(PDOKAN_CONTROL Control)
 	}
 	LeaveCriticalSection(&g_CriticalSection);
 }
-static VOID DokanControl(PDOKAN_CONTROL Control)
+static VOID DokanControl(_Inout_ PDOKAN_CONTROL Control)
 {
 	PMOUNT_ENTRY	mountEntry;
 	ULONG	index = 0;
@@ -197,6 +195,7 @@ static VOID DokanControl(PDOKAN_CONTROL Control)
 						mountEntry->MountControl.DeviceName);
 			}
 			RemoveMountEntry(mountEntry);
+			free(mountEntry);
 		} else {
 			mountEntry->MountControl.Status = DOKAN_CONTROL_FAIL;
 			Control->Status = DOKAN_CONTROL_FAIL;
@@ -234,7 +233,7 @@ static VOID DokanControl(PDOKAN_CONTROL Control)
 
 
 
-static DWORD WINAPI HandlerEx(DWORD dwControl, DWORD dwEventType, LPVOID lpEventData, LPVOID lpContext)
+static DWORD WINAPI HandlerEx(_In_ DWORD dwControl, _In_ DWORD dwEventType, _In_ LPVOID lpEventData, _In_ LPVOID lpContext)
 {
 	switch (dwControl) {
 	case SERVICE_CONTROL_STOP:
@@ -260,7 +259,7 @@ static DWORD WINAPI HandlerEx(DWORD dwControl, DWORD dwEventType, LPVOID lpEvent
 }
 
 
-static VOID BuildSecurityAttributes(PSECURITY_ATTRIBUTES SecurityAttributes)
+static VOID BuildSecurityAttributes(_Out_ PSECURITY_ATTRIBUTES SecurityAttributes)
 {
 	LPTSTR sd = L"D:P(A;;GA;;;SY)(A;;GRGWGX;;;BA)(A;;GRGW;;;WD)(A;;GR;;;RC)";
 
@@ -277,7 +276,7 @@ static VOID BuildSecurityAttributes(PSECURITY_ATTRIBUTES SecurityAttributes)
 }
 
 
-static VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
+static VOID WINAPI ServiceMain(_In_ DWORD dwArgc, _In_ LPTSTR *lpszArgv)
 {
 	DWORD			eventNo;
 	HANDLE			pipe, device;
@@ -289,25 +288,27 @@ static VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 	EVENT_CONTEXT	eventContext;
 	SECURITY_ATTRIBUTES sa;
 
+	g_StatusHandle = RegisterServiceCtrlHandlerEx(DOKAN_MOUNTER_SERVICE, HandlerEx, NULL);
+
+	// extend completion time
+	g_ServiceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
+	g_ServiceStatus.dwWin32ExitCode = NO_ERROR;
+	g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP;
+	g_ServiceStatus.dwServiceSpecificExitCode = 0;
+	g_ServiceStatus.dwWaitHint = 30000;
+	g_ServiceStatus.dwCheckPoint = 1;
+	g_ServiceStatus.dwCurrentState = SERVICE_START_PENDING;
+	SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
+
 #if _MSC_VER < 1300
+#pragma warning(suppress: 6031)
 	InitializeCriticalSection(&g_CriticalSection);
 #else
+#pragma warning(suppress: 6031)
 	InitializeCriticalSectionAndSpinCount(&g_CriticalSection, 0x80000400);
 #endif
 			
 	InitializeListHead(&g_MountList);
-
-	g_StatusHandle = RegisterServiceCtrlHandlerEx(L"DokanMounter", HandlerEx, NULL);
-
-	// extend completion time
-	g_ServiceStatus.dwServiceType				= SERVICE_WIN32_OWN_PROCESS;
-	g_ServiceStatus.dwWin32ExitCode				= NO_ERROR;
-	g_ServiceStatus.dwControlsAccepted			= SERVICE_ACCEPT_STOP;
-	g_ServiceStatus.dwServiceSpecificExitCode	= 0;
-	g_ServiceStatus.dwWaitHint					= 30000;
-	g_ServiceStatus.dwCheckPoint				= 1;
-	g_ServiceStatus.dwCurrentState				= SERVICE_START_PENDING;
-	SetServiceStatus(g_StatusHandle, &g_ServiceStatus);
 
 	BuildSecurityAttributes(&sa);
 
@@ -318,7 +319,7 @@ static VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 
 	if (pipe == INVALID_HANDLE_VALUE) {
 		// TODO: should do something
-		DbgPrintW(L"DokanMounter: failed to create named pipe: %d\n", GetLastError());
+		DbgPrintW(L"%s: failed to create named pipe: %d\n", DOKAN_MOUNTER_SERVICE, GetLastError());
 	}
 
 	device = CreateFile(
@@ -333,7 +334,7 @@ static VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 	
 	if (device == INVALID_HANDLE_VALUE) {
 		// TODO: should do something
-		DbgPrintW(L"DokanMounter: failed to open device: %d\n", GetLastError());
+		DbgPrintW(L"%s: failed to open device: %d\n", DOKAN_MOUNTER_SERVICE, GetLastError());
 	}
 
 	eventConnect = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -358,7 +359,7 @@ static VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 			&eventContext, sizeof(EVENT_CONTEXT), NULL, &driver)) {
 			DWORD error = GetLastError();
 			if (error != 997) {
-				DbgPrintW(L"DokanMounter: DeviceIoControl error: %d\n", error);
+				DbgPrintW(L"%s: DeviceIoControl error: %d\n", DOKAN_MOUNTER_SERVICE, error);
 			}
 		}
 
@@ -386,7 +387,7 @@ static VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 
 			if (GetOverlappedResult(device, &driver, &returnedBytes, FALSE)) {
 				if (returnedBytes == sizeof(EVENT_CONTEXT)) {
-					DbgPrintW(L"DokanMounter: Unmount\n");
+					DbgPrintW(L"%s: Unmount\n", DOKAN_MOUNTER_SERVICE);
 
 					ZeroMemory(&unmount, sizeof(DOKAN_CONTROL));
 					unmount.Type = DOKAN_CONTROL_UNMOUNT;
@@ -394,12 +395,12 @@ static VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 							eventContext.Unmount.DeviceName);
 					DokanControl(&unmount);
 				} else {
-					DbgPrintW(L"DokanMounter: Unmount error\n", control.Type);
+					DbgPrintW(L"%s: Unmount error\n", DOKAN_MOUNTER_SERVICE, control.Type);
 				}
 			}
 
 		} else if (eventNo == 2) {
-			DbgPrintW(L"DokanMounter: stop mounter service\n");
+			DbgPrintW(L"%s: stop mounter service\n", DOKAN_MOUNTER_SERVICE);
 			g_ServiceStatus.dwWaitHint     = 0;
 			g_ServiceStatus.dwCheckPoint   = 0;
 			g_ServiceStatus.dwCurrentState = SERVICE_STOPPED;
@@ -425,10 +426,10 @@ static VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 
 
 
-int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hinstPrev, LPSTR lpszCmdLine, int nCmdShow)
+int WINAPI WinMain(_In_ HINSTANCE hinst, _In_opt_ HINSTANCE hinstPrev, _In_ LPSTR lpszCmdLine, _In_ int nCmdShow)
 {
 	SERVICE_TABLE_ENTRY serviceTable[] = {
-		{L"DokanMounter", ServiceMain}, {NULL, NULL}
+			{ DOKAN_MOUNTER_SERVICE, ServiceMain }, { NULL, NULL }
 	};
 
 
