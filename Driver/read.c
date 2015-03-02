@@ -21,11 +21,11 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "dokan.h"
 
-
+#pragma alloc_text("PAGED_CODE", DokanDispatchRead)
 NTSTATUS
 DokanDispatchRead(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
 	)
 
 /*++
@@ -98,7 +98,7 @@ Return Value:
 
 		DDbgPrint("  ProcessId %lu\n", IoGetRequestorProcessId(Irp));
 		DokanPrintFileName(fileObject);
-		DDbgPrint("  ByteCount:%d ByteOffset:%d\n", bufferLength, byteOffset);
+		DDbgPrint("  ByteCount:%d ByteOffset:%lld\n", bufferLength, byteOffset.QuadPart);
 
 		if (bufferLength == 0) {
 			status = STATUS_SUCCESS;
@@ -191,8 +191,8 @@ Return Value:
 
 VOID
 DokanCompleteRead(
-	__in PIRP_ENTRY			IrpEntry,
-	__in PEVENT_INFORMATION	EventInfo
+	_In_ PIRP_ENTRY			IrpEntry,
+	_In_ PEVENT_INFORMATION	EventInfo
 	)
 {
 	PIRP				irp;

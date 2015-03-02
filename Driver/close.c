@@ -23,10 +23,11 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 
+#pragma alloc_text("PAGED_CODE", DokanDispatchClose)
 NTSTATUS
 DokanDispatchClose(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
 	)
 
 /*++
@@ -75,19 +76,20 @@ Return Value:
 		DDbgPrint("  ProcessId %lu\n", IoGetRequestorProcessId(Irp));
 		DokanPrintFileName(fileObject);
 
+		ccb = fileObject->FsContext2;
+		ASSERT(ccb != NULL);
+
+		fcb = ccb->Fcb;
+		ASSERT(fcb != NULL);
+
 		vcb = DeviceObject->DeviceExtension;
 
 		if (GetIdentifierType(vcb) != VCB ||
-			!DokanCheckCCB(vcb->Dcb, fileObject->FsContext2)) {
+			!DokanCheckCCB(vcb->Dcb, ccb)) {
 
 			if (fileObject->FsContext2) {
-				ccb = fileObject->FsContext2;
-				ASSERT(ccb != NULL);
 
-				fcb = ccb->Fcb;
-				ASSERT(fcb != NULL);
-
-				DDbgPrint("   Free CCB:%X\n", ccb);
+				DDbgPrint("   Free CCB:%p\n", ccb);
 				DokanFreeCCB(ccb);
 
 				DokanFreeFCB(fcb);
@@ -97,19 +99,13 @@ Return Value:
 			__leave;
 		}
 
-		ccb = fileObject->FsContext2;
-		ASSERT(ccb != NULL);
-
-		fcb = ccb->Fcb;
-		ASSERT(fcb != NULL);
-
 		eventLength = sizeof(EVENT_CONTEXT) + fcb->FileName.Length;
 		eventContext = AllocateEventContext(vcb->Dcb, Irp, eventLength, ccb);
 
 		if (eventContext == NULL) {
 			//status = STATUS_INSUFFICIENT_RESOURCES;
 			DDbgPrint("   eventContext == NULL\n");
-			DDbgPrint("   Free CCB:%X\n", ccb);
+			DDbgPrint("   Free CCB:%p\n", ccb);
 			DokanFreeCCB(ccb);
 			DokanFreeFCB(fcb);
 			status = STATUS_SUCCESS;
@@ -123,7 +119,7 @@ Return Value:
 		eventContext->Close.FileNameLength = fcb->FileName.Length;
 		RtlCopyMemory(eventContext->Close.FileName, fcb->FileName.Buffer, fcb->FileName.Length);
 
-		DDbgPrint("   Free CCB:%X\n", ccb);
+		DDbgPrint("   Free CCB:%p\n", ccb);
 		DokanFreeCCB(ccb);
 
 		DokanFreeFCB(fcb);

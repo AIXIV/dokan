@@ -343,7 +343,7 @@ DRIVER_DISPATCH DokanGetAccessToken;
 
 NTSTATUS
 DokanEventRelease(
-	__in PDEVICE_OBJECT DeviceObject);
+	_In_ PDEVICE_OBJECT DeviceObject);
 
 
 DRIVER_DISPATCH DokanEventStart;
@@ -353,221 +353,231 @@ DRIVER_DISPATCH DokanEventWrite;
 
 PEVENT_CONTEXT
 AllocateEventContextRaw(
-	__in ULONG	EventContextLength
+	_In_ ULONG	EventContextLength
 	);
 
 PEVENT_CONTEXT
 AllocateEventContext(
-	__in PDokanDCB	Dcb,
-	__in PIRP				Irp,
-	__in ULONG				EventContextLength,
-	__in PDokanCCB			Ccb);
+	_In_ PDokanDCB	Dcb,
+	_In_ PIRP				Irp,
+	_In_ ULONG				EventContextLength,
+	_In_opt_ PDokanCCB		Ccb);
 
 VOID
 DokanFreeEventContext(
-	__in PEVENT_CONTEXT	EventContext);
+	_In_ PEVENT_CONTEXT	EventContext);
 
 
 NTSTATUS
 DokanRegisterPendingIrp(
-    __in PDEVICE_OBJECT DeviceObject,
-    __in PIRP			Irp,
-	__in PEVENT_CONTEXT	EventContext,
-	__in ULONG			Flags);
+    _In_ PDEVICE_OBJECT DeviceObject,
+    _In_ PIRP			Irp,
+	_In_ PEVENT_CONTEXT	EventContext,
+	_In_ ULONG			Flags);
 
 
 VOID
 DokanEventNotification(
-	__in PIRP_LIST		NotifyEvent,
-	__in PEVENT_CONTEXT	EventContext);
+	_In_ PIRP_LIST		NotifyEvent,
+	_In_ PEVENT_CONTEXT	EventContext);
 
 
 NTSTATUS
 DokanUnmountNotification(
-	__in PDokanDCB	Dcb,
-	__in PEVENT_CONTEXT		EventContext);
+	_In_ PDokanDCB	Dcb,
+	_In_ PEVENT_CONTEXT		EventContext);
 
 
 VOID
 DokanCompleteDirectoryControl(
-	__in PIRP_ENTRY			IrpEntry,
-	__in PEVENT_INFORMATION	EventInfo);
+	_In_ PIRP_ENTRY			IrpEntry,
+	_In_ PEVENT_INFORMATION	EventInfo);
 
 VOID
 DokanCompleteRead(
-	__in PIRP_ENTRY			IrpEntry,
-	__in PEVENT_INFORMATION	EventInfo);
+	_In_ PIRP_ENTRY			IrpEntry,
+	_In_ PEVENT_INFORMATION	EventInfo);
 
 VOID
 DokanCompleteWrite(
-	__in PIRP_ENTRY			IrpEntry,
-	__in PEVENT_INFORMATION	EventInfo);
+	_In_ PIRP_ENTRY			IrpEntry,
+	_In_ PEVENT_INFORMATION	EventInfo);
 
 
 VOID
 DokanCompleteQueryInformation(
-	__in PIRP_ENTRY			IrpEntry,
-	__in PEVENT_INFORMATION	EventInfo);
+	_In_ PIRP_ENTRY			IrpEntry,
+	_In_ PEVENT_INFORMATION	EventInfo);
 
 
 VOID
 DokanCompleteSetInformation(
-	__in PIRP_ENTRY			IrpEntry,
-	__in PEVENT_INFORMATION EventInfo);
+	_In_ PIRP_ENTRY			IrpEntry,
+	_In_ PEVENT_INFORMATION EventInfo);
 
 VOID
 DokanCompleteCreate(
-	__in PIRP_ENTRY			IrpEntry,
-	__in PEVENT_INFORMATION	EventInfo);
+	_In_ PIRP_ENTRY			IrpEntry,
+	_In_ PEVENT_INFORMATION	EventInfo);
 
 
 VOID
 DokanCompleteCleanup(
-	__in PIRP_ENTRY			IrpEntry,
-	__in PEVENT_INFORMATION	EventInfo);
+	_In_ PIRP_ENTRY			IrpEntry,
+	_In_ PEVENT_INFORMATION	EventInfo);
 
 
 VOID
 DokanCompleteLock(
-	__in PIRP_ENTRY			IrpEntry,
-	__in PEVENT_INFORMATION	EventInfo);
+	_In_ PIRP_ENTRY			IrpEntry,
+	_In_ PEVENT_INFORMATION	EventInfo);
 
 VOID
 DokanCompleteQueryVolumeInformation(
-	__in PIRP_ENTRY			IrpEntry,
-	__in PEVENT_INFORMATION	EventInfo);
+	_In_ PIRP_ENTRY			IrpEntry,
+	_In_ PEVENT_INFORMATION	EventInfo);
 
 VOID
 DokanCompleteFlush(
-	__in PIRP_ENTRY			IrpEntry,
-	__in PEVENT_INFORMATION	EventInfo);
+	_In_ PIRP_ENTRY			IrpEntry,
+	_In_ PEVENT_INFORMATION	EventInfo);
 
 VOID
 DokanCompleteQuerySecurity(
-	__in PIRP_ENTRY		IrpEntry,
-	__in PEVENT_INFORMATION EventInfo);
+	_In_ PIRP_ENTRY		IrpEntry,
+	_In_ PEVENT_INFORMATION EventInfo);
 
 VOID
 DokanCompleteSetSecurity(
-	__in PIRP_ENTRY		IrpEntry,
-	__in PEVENT_INFORMATION EventInfo);
+	_In_ PIRP_ENTRY		IrpEntry,
+	_In_ PEVENT_INFORMATION EventInfo);
 
 VOID
 DokanNoOpRelease (
-    __in PVOID Fcb);
+    _In_ PVOID Fcb);
 
 BOOLEAN
 DokanNoOpAcquire(
-    __in PVOID Fcb,
-    __in BOOLEAN Wait);
+    _In_ PVOID Fcb,
+    _In_ BOOLEAN Wait);
 
+_Success_(NT_SUCCESS(return))
 NTSTATUS
 DokanCreateGlobalDiskDevice(
-	__in PDRIVER_OBJECT DriverObject,
-	__out PDOKAN_GLOBAL* DokanGlobal);
+	_In_ PDRIVER_OBJECT								DriverObject,
+	_Outptr_result_nullonfailure_ PDOKAN_GLOBAL*	DokanGlobal);
 
 NTSTATUS
 DokanCreateDiskDevice(
-	__in PDRIVER_OBJECT DriverObject,
-	__in ULONG			MountId,
-	__in PWCHAR			BaseGuid,
-	__in PDOKAN_GLOBAL	DokanGlobal,
-	__in DEVICE_TYPE	DeviceType,
-	__in ULONG			DeviceCharacteristics,
-	__out PDokanDCB* Dcb);
+	_In_ PDRIVER_OBJECT DriverObject,
+	_In_ ULONG			MountId,
+	_In_ PWCHAR			BaseGuid,
+	_In_ PDOKAN_GLOBAL	DokanGlobal,
+	_In_ DEVICE_TYPE	DeviceType,
+	_In_ ULONG			DeviceCharacteristics,
+	_Outptr_ PDokanDCB* Dcb);
 
 
 VOID
 DokanDeleteDeviceObject(
-	__in PDokanDCB Dcb);
+	_Inout_ PDokanDCB Dcb);
 
 VOID
 DokanPrintNTStatus(
-	NTSTATUS	Status);
+	_In_ NTSTATUS	Status);
 
 
 VOID
 DokanNotifyReportChange0(
-	__in PDokanFCB				Fcb,
-	__in PUNICODE_STRING		FileName,
-	__in ULONG					FilterMatch,
-	__in ULONG					Action);
+	_In_ PDokanFCB				Fcb,
+	_In_ PUNICODE_STRING		FileName,
+	_In_ ULONG					FilterMatch,
+	_In_ ULONG					Action);
 
 VOID
 DokanNotifyReportChange(
-	__in PDokanFCB	Fcb,
-	__in ULONG		FilterMatch,
-	__in ULONG		Action);
+	_In_ PDokanFCB	Fcb,
+	_In_ ULONG		FilterMatch,
+	_In_ ULONG		Action);
 
 
 PDokanFCB
 DokanAllocateFCB(
-	__in PDokanVCB Vcb);
+	_In_ PDokanVCB Vcb);
 
 
 NTSTATUS
 DokanFreeFCB(
-  __in PDokanFCB Fcb);
+  _In_ PDokanFCB Fcb);
 
 
 PDokanCCB
 DokanAllocateCCB(
-	__in PDokanDCB Dcb,
-	__in PDokanFCB	Fcb);
+	_In_ PDokanDCB Dcb,
+	_In_ PDokanFCB	Fcb);
 
 
 NTSTATUS
 DokanFreeCCB(
-  __in PDokanCCB Ccb);
+	_In_ PDokanCCB Ccb);
 
 NTSTATUS
 DokanStartCheckThread(
-	__in PDokanDCB	Dcb);
+	_In_ PDokanDCB	Dcb);
 
 VOID
 DokanStopCheckThread(
-	__in PDokanDCB	Dcb);
+	_In_ PDokanDCB	Dcb);
 
 
 BOOLEAN
 DokanCheckCCB(
-	__in PDokanDCB	Dcb,
-	__in PDokanCCB	Ccb);
+	_In_ PDokanDCB	Dcb,
+	_In_opt_ PDokanCCB	Ccb);
+
+_Success_(return)
+BOOLEAN DokanGetDispatchParameters(
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_In_opt_ PFILE_OBJECT FileObject,
+	_Outptr_result_nullonfailure_ PDokanVCB *Vcb,
+	_Outptr_result_nullonfailure_ PDokanCCB *Ccb,
+	_Outptr_result_nullonfailure_ PDokanFCB *Fcb
+);
 
 VOID
 DokanInitIrpList(
-	 __in PIRP_LIST		IrpList);
+	_In_ PIRP_LIST		IrpList);
 
 NTSTATUS
 DokanStartEventNotificationThread(
-	__in PDokanDCB	Dcb);
+	_In_ PDokanDCB	Dcb);
 
 VOID
 DokanStopEventNotificationThread(
-	__in PDokanDCB	Dcb);
+	_In_ PDokanDCB	Dcb);
 
 
 VOID
 DokanUpdateTimeout(
-	__out PLARGE_INTEGER KickCount,
-	__in ULONG Timeout);
+	_Out_ PLARGE_INTEGER KickCount,
+	_In_ ULONG Timeout);
 
 VOID
 DokanUnmount(
-	__in PDokanDCB Dcb);
+	_In_ PDokanDCB Dcb);
 
 VOID
 PrintIdType(
-	__in VOID* Id);
+	_In_ VOID* Id);
 
 NTSTATUS
 DokanAllocateMdl(
-	__in PIRP	Irp,
-	__in ULONG	Length);
+	_In_ PIRP	Irp,
+	_In_ ULONG	Length);
 
 VOID
 DokanFreeMdl(
-	__in PIRP	Irp);
+	_In_ PIRP	Irp);
 
 
 #endif // _DOKAN_H_

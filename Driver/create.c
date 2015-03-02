@@ -29,7 +29,7 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 // We must NOT call without VCB lcok
 PDokanFCB
 DokanAllocateFCB(
-	__in PDokanVCB Vcb
+	_In_ PDokanVCB Vcb
 	)
 {
 	PDokanFCB fcb = ExAllocatePool(sizeof(DokanFCB));
@@ -86,9 +86,9 @@ DokanAllocateFCB(
 
 PDokanFCB
 DokanGetFCB(
-	__in PDokanVCB	Vcb,
-	__in PWCHAR		FileName,
-	__in ULONG		FileNameLength)
+	_In_ PDokanVCB	Vcb,
+	_In_ PWCHAR		FileName,
+	_In_ ULONG		FileNameLength)
 {
 	PLIST_ENTRY		thisEntry, nextEntry, listHead;
 	PDokanFCB		fcb = NULL;
@@ -160,7 +160,7 @@ DokanGetFCB(
 
 NTSTATUS
 DokanFreeFCB(
-  __in PDokanFCB Fcb
+  _In_ PDokanFCB Fcb
   )
 {
 	PDokanVCB vcb;
@@ -179,7 +179,7 @@ DokanFreeFCB(
 
 		RemoveEntryList(&Fcb->NextFCB);
 
-		DDbgPrint("  Free FCB:%X\n", Fcb);
+		DDbgPrint("  Free FCB:%p\n", Fcb);
 		ExFreePool(Fcb->FileName.Buffer);
 
 #if _WIN32_WINNT >= 0x0501
@@ -212,8 +212,8 @@ DokanFreeFCB(
 
 PDokanCCB
 DokanAllocateCCB(
-	__in PDokanDCB	Dcb,
-	__in PDokanFCB	Fcb
+	_In_ PDokanDCB	Dcb,
+	_In_ PDokanFCB	Fcb
 	)
 {
 	PDokanCCB ccb = ExAllocatePool(sizeof(DokanCCB));
@@ -253,7 +253,7 @@ DokanAllocateCCB(
 
 NTSTATUS
 DokanFreeCCB(
-  __in PDokanCCB ccb
+  _In_ PDokanCCB ccb
   )
 {
 	PDokanFCB fcb;
@@ -285,8 +285,8 @@ DokanFreeCCB(
 
 LONG
 DokanUnicodeStringChar(
-	__in PUNICODE_STRING UnicodeString,
-	__in WCHAR	Char)
+	_In_ PUNICODE_STRING UnicodeString,
+	_In_ WCHAR	Char)
 {
 	ULONG i = 0;
 	for (; i < UnicodeString->Length/sizeof(WCHAR); ++i) {
@@ -300,8 +300,8 @@ DokanUnicodeStringChar(
 
 VOID
 SetFileObjectForVCB(
-	__in PFILE_OBJECT	FileObject,
-	__in PDokanVCB		Vcb)
+	_In_ PFILE_OBJECT	FileObject,
+	_In_ PDokanVCB		Vcb)
 {
 	FileObject->SectionObjectPointer = &Vcb->SectionObjectPointers;
 	FileObject->FsContext = &Vcb->VolumeFileHeader;
@@ -311,8 +311,8 @@ SetFileObjectForVCB(
 
 NTSTATUS
 DokanDispatchCreate(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
 	)
 
 /*++
@@ -403,6 +403,7 @@ Return Value:
 						fileObject->FileName.Length);
 	   }
 
+	   // TODO: is this necessary? causes SAL warning
 		if (relatedFileObject != NULL) {
 			fileObject->Vpb = relatedFileObject->Vpb;
 		} else {
@@ -556,8 +557,8 @@ Return Value:
 
 VOID
 DokanCompleteCreate(
-	 __in PIRP_ENTRY			IrpEntry,
-	 __in PEVENT_INFORMATION	EventInfo
+	 _In_ PIRP_ENTRY			IrpEntry,
+	 _In_ PEVENT_INFORMATION	EventInfo
 	 )
 {
 	PIRP				irp;
@@ -636,7 +637,7 @@ DokanCompleteCreate(
 			}
 		}
 	} else {
-		DDbgPrint("   IRP_MJ_CREATE failed. Free CCB:%X\n", ccb);
+		DDbgPrint("   IRP_MJ_CREATE failed. Free CCB:%p\n", ccb);
 		DokanFreeCCB(ccb);
 		DokanFreeFCB(fcb);
 	}

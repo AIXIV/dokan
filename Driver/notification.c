@@ -61,10 +61,10 @@ IOCTL_EVENT_INFO:
 
 VOID
 SetCommonEventContext(
-	__in PDokanDCB		Dcb,
-	__in PEVENT_CONTEXT	EventContext,
-	__in PIRP			Irp,
-	__in PDokanCCB		Ccb)
+	_In_ PDokanDCB			Dcb,
+	_Out_ PEVENT_CONTEXT	EventContext,
+	_In_ PIRP				Irp,
+	_In_opt_ PDokanCCB		Ccb)
 {
 	PIO_STACK_LOCATION  irpSp;
 
@@ -85,7 +85,7 @@ SetCommonEventContext(
 
 PEVENT_CONTEXT
 AllocateEventContextRaw(
-	__in ULONG	EventContextLength
+	_In_ ULONG	EventContextLength
 	)
 {
 	ULONG driverContextLength;
@@ -111,10 +111,10 @@ AllocateEventContextRaw(
 
 PEVENT_CONTEXT
 AllocateEventContext(
-	__in PDokanDCB	Dcb,
-	__in PIRP		Irp,
-	__in ULONG		EventContextLength,
-	__in PDokanCCB	Ccb
+	_In_ PDokanDCB		Dcb,
+	_In_ PIRP			Irp,
+	_In_ ULONG			EventContextLength,
+	_In_opt_ PDokanCCB	Ccb
 	)
 {
 	PEVENT_CONTEXT eventContext;
@@ -131,7 +131,7 @@ AllocateEventContext(
 
 VOID
 DokanFreeEventContext(
-	__in PEVENT_CONTEXT	EventContext
+	_In_ PEVENT_CONTEXT	EventContext
 	)
 {
 	PDRIVER_EVENT_CONTEXT driverEventContext =
@@ -142,8 +142,8 @@ DokanFreeEventContext(
 
 VOID
 DokanEventNotification(
-	__in PIRP_LIST		NotifyEvent,
-	__in PEVENT_CONTEXT	EventContext
+	_In_ PIRP_LIST		NotifyEvent,
+	_In_ PEVENT_CONTEXT	EventContext
 	)
 {
 	PDRIVER_EVENT_CONTEXT driverEventContext =
@@ -166,7 +166,7 @@ DokanEventNotification(
 
 VOID
 ReleasePendingIrp(
-	__in PIRP_LIST	PendingIrp
+	_In_ PIRP_LIST	PendingIrp
 	)
 {
 	PLIST_ENTRY	listHead;
@@ -217,7 +217,7 @@ ReleasePendingIrp(
 
 VOID
 ReleaseNotifyEvent(
-	__in PIRP_LIST	NotifyEvent
+	_In_ PIRP_LIST	NotifyEvent
 	)
 {
 	PDRIVER_EVENT_CONTEXT	driverEventContext;
@@ -241,8 +241,8 @@ ReleaseNotifyEvent(
 
 VOID
 NotificationLoop(
-	__in PIRP_LIST	PendingIrp,
-	__in PIRP_LIST	NotifyEvent
+	_In_ PIRP_LIST	PendingIrp,
+	_In_ PIRP_LIST	NotifyEvent
 	)
 {
 	PDRIVER_EVENT_CONTEXT	driverEventContext;
@@ -276,6 +276,9 @@ NotificationLoop(
 		listHead = RemoveHeadList(&PendingIrp->ListHead);
 		irpEntry = CONTAINING_RECORD(listHead, IRP_ENTRY, ListEntry);
 
+		ASSERT(driverEventContext != NULL);
+		ASSERT(irpEntry != NULL);
+
 		eventLen = driverEventContext->EventContext.Length;
 
 		// ensure this eventIrp is not cancelled
@@ -301,9 +304,9 @@ NotificationLoop(
 			continue;
 		}
 
+		ASSERT(irpEntry->IrpSp != NULL);
 		// available size that is used for event notification
-		bufferLen =
-			irpEntry->IrpSp->Parameters.DeviceIoControl.OutputBufferLength;
+		bufferLen = irpEntry->IrpSp->Parameters.DeviceIoControl.OutputBufferLength;
 		// buffer that is used to inform Event
 		buffer	= irp->AssociatedIrp.SystemBuffer;
 
@@ -358,12 +361,13 @@ NotificationLoop(
 KSTART_ROUTINE NotificationThread;
 VOID
 NotificationThread(
-	__in PDokanDCB	Dcb
+	_In_ PVOID StartContext
 	)
 {
 	PKEVENT events[5];
 	PKWAIT_BLOCK waitBlock;
 	NTSTATUS status;
+	PDokanDCB Dcb = (PDokanDCB)StartContext;
 
 	DDbgPrint("==> NotificationThread\n");
 
@@ -407,7 +411,7 @@ NotificationThread(
 
 NTSTATUS
 DokanStartEventNotificationThread(
-	__in PDokanDCB	Dcb)
+	_In_ PDokanDCB	Dcb)
 {
 	NTSTATUS status;
 	HANDLE	thread;
@@ -438,7 +442,7 @@ DokanStartEventNotificationThread(
 
 VOID
 DokanStopEventNotificationThread(
-	__in PDokanDCB	Dcb)
+	_In_ PDokanDCB	Dcb)
 {
 	DDbgPrint("==> DokanStopEventNotificationThread\n");
 	
@@ -458,7 +462,7 @@ DokanStopEventNotificationThread(
 
 NTSTATUS
 DokanEventRelease(
-	__in PDEVICE_OBJECT DeviceObject)
+	_In_ PDEVICE_OBJECT DeviceObject)
 {
 	PDokanDCB	dcb;
 	PDokanVCB	vcb;
@@ -498,7 +502,7 @@ DokanEventRelease(
 			ccbNext = ccbEntry->Flink;
 			ccb = CONTAINING_RECORD(ccbEntry, DokanCCB, NextCCB);
 
-			DDbgPrint("  NotifyCleanup ccb:%X, context:%X, filename:%wZ\n",
+			DDbgPrint("  NotifyCleanup ccb:%p, context:%X, filename:%wZ\n",
 					ccb, (ULONG)ccb->UserContext, &fcb->FileName);
 			FsRtlNotifyCleanup(vcb->NotifySync, &vcb->DirNotifyList, ccb);
 		}

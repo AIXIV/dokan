@@ -24,7 +24,7 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 VOID
 DokanUnmount(
-	__in PDokanDCB Dcb
+	_In_ PDokanDCB Dcb
 	)
 {
 	ULONG					eventLength;
@@ -78,7 +78,7 @@ DokanUnmount(
 
 VOID
 DokanCheckKeepAlive(
-	__in PDokanDCB	Dcb
+	_In_ PDokanDCB	Dcb
 	)
 {
 	LARGE_INTEGER		tickCount;
@@ -120,7 +120,7 @@ DokanCheckKeepAlive(
 
 NTSTATUS
 ReleaseTimeoutPendingIrp(
-   __in PDokanDCB	Dcb
+   _In_ PDokanDCB	Dcb
    )
 {
 	KIRQL				oldIrql;
@@ -209,8 +209,8 @@ ReleaseTimeoutPendingIrp(
 
 NTSTATUS
 DokanResetPendingIrpTimeout(
-   __in PDEVICE_OBJECT	DeviceObject,
-   __in PIRP			Irp
+   _In_ PDEVICE_OBJECT	DeviceObject,
+   _Inout_ PIRP			Irp
    )
 {
 	KIRQL				oldIrql;
@@ -266,7 +266,7 @@ DokanResetPendingIrpTimeout(
 KSTART_ROUTINE DokanTimeoutThread;
 VOID
 DokanTimeoutThread(
-	PDokanDCB	Dcb)
+	_In_ PVOID StartContext)
 /*++
 
 Routine Description:
@@ -279,6 +279,7 @@ Routine Description:
 	KTIMER			timer;
 	PVOID			pollevents[2];
 	LARGE_INTEGER	timeout = {0};
+	PDokanDCB		Dcb = (PDokanDCB)StartContext;
 
 	DDbgPrint("==> DokanTimeoutThread\n");
 
@@ -314,7 +315,7 @@ Routine Description:
 
 NTSTATUS
 DokanStartCheckThread(
-	__in PDokanDCB	Dcb)
+	_In_ PDokanDCB	Dcb)
 /*++
 
 Routine Description:
@@ -348,7 +349,7 @@ Routine Description:
 
 VOID
 DokanStopCheckThread(
-	__in PDokanDCB	Dcb)
+	_In_ PDokanDCB	Dcb)
 /*++
 
 Routine Description:
@@ -374,8 +375,8 @@ Routine Description:
 
 NTSTATUS
 DokanInformServiceAboutUnmount(
-   __in PDEVICE_OBJECT	DeviceObject,
-   __in PIRP			Irp)
+   _In_ PDEVICE_OBJECT	DeviceObject,
+   _In_ PIRP			Irp)
 {
 
 	return STATUS_SUCCESS;
@@ -384,8 +385,8 @@ DokanInformServiceAboutUnmount(
 
 VOID
 DokanUpdateTimeout(
-	__out PLARGE_INTEGER TickCount,
-	__in ULONG	Timeout
+	_Out_ PLARGE_INTEGER TickCount,
+	_In_ ULONG	Timeout
 	)
 {
 	KeQueryTickCount(TickCount);

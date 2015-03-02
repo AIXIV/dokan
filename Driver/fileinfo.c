@@ -21,10 +21,11 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "dokan.h"
 
+#pragma alloc_text("PAGED_CODE", DokanDispatchQueryInformation)
 NTSTATUS
 DokanDispatchQueryInformation(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
    )
 {
 	NTSTATUS				status = STATUS_NOT_IMPLEMENTED;
@@ -76,7 +77,7 @@ DokanDispatchQueryInformation(
 			__leave;
 		}
 
-		ccb	= (PDokanCCB)fileObject->FsContext2;
+		ccb = (PDokanCCB)fileObject->FsContext2;
 		ASSERT(ccb != NULL);
 
 		fcb = ccb->Fcb;
@@ -220,8 +221,8 @@ DokanDispatchQueryInformation(
 
 VOID
 DokanCompleteQueryInformation(
-	__in PIRP_ENTRY		IrpEntry,
-	__in PEVENT_INFORMATION EventInfo
+	_In_ PIRP_ENTRY		IrpEntry,
+	_In_ PEVENT_INFORMATION EventInfo
 	)
 {
 	PIRP				irp;
@@ -292,10 +293,11 @@ DokanCompleteQueryInformation(
 }
 
 
+#pragma alloc_text("PAGED_CODE", DokanDispatchSetInformation)
 NTSTATUS
 DokanDispatchSetInformation(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
    )
 {
 
@@ -492,8 +494,8 @@ DokanDispatchSetInformation(
 
 VOID
 DokanCompleteSetInformation(
-	__in PIRP_ENTRY		IrpEntry,
-	__in PEVENT_INFORMATION EventInfo
+	_In_ PIRP_ENTRY		IrpEntry,
+	_In_ PEVENT_INFORMATION EventInfo
 	)
 {
 	PIRP				irp;

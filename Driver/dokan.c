@@ -43,48 +43,42 @@ FAST_IO_CHECK_IF_POSSIBLE DokanFastIoCheckIfPossible;
 
 BOOLEAN
 DokanFastIoCheckIfPossible (
-    __in PFILE_OBJECT	FileObject,
-    __in PLARGE_INTEGER	FileOffset,
-    __in ULONG			Length,
-    __in BOOLEAN		Wait,
-    __in ULONG			LockKey,
-    __in BOOLEAN		CheckForReadOperation,
-    __out PIO_STATUS_BLOCK	IoStatus,
-    __in PDEVICE_OBJECT		DeviceObject
+    _In_ PFILE_OBJECT	FileObject,
+    _In_ PLARGE_INTEGER	FileOffset,
+    _In_ ULONG			Length,
+    _In_ BOOLEAN		Wait,
+    _In_ ULONG			LockKey,
+    _In_ BOOLEAN		CheckForReadOperation,
+	_Pre_notnull_
+	_When_(return != FALSE, _Post_equal_to_(_Old_(IoStatus)))
+	_When_(return == FALSE, _Post_valid_)
+    PIO_STATUS_BLOCK	IoStatus,
+    _In_ PDEVICE_OBJECT		DeviceObject
     )
 {
 	DDbgPrint("DokanFastIoCheckIfPossible\n");
 	return FALSE;
 }
 
-
-BOOLEAN
-DokanFastIoRead (
-    __in PFILE_OBJECT	FileObject,
-    __in PLARGE_INTEGER	FileOffset,
-    __in ULONG			Length,
-    __in BOOLEAN		Wait,
-    __in ULONG			LockKey,
-    __in PVOID			Buffer,
-    __out PIO_STATUS_BLOCK	IoStatus,
-    __in PDEVICE_OBJECT		DeviceObject
-    )
-{
-	DDbgPrint("DokanFastIoRead\n");
-	return FALSE;
-}
+/*
+* TODO: Consider removing the next two functions as they seem to be obsolete
+* (fast io is not available according to DokanFastIoCheckIfPossible)
+* and cause SAL warnings
+*/
 
 FAST_IO_ACQUIRE_FILE DokanAcquireForCreateSection;
 VOID
 DokanAcquireForCreateSection(
-	__in PFILE_OBJECT FileObject
+	_In_ PFILE_OBJECT FileObject
 	)
 {
 	PFSRTL_ADVANCED_FCB_HEADER	header;
 
 	header = FileObject->FsContext;
 	if (header && header->Resource) {
+		KeEnterCriticalRegion();
 		ExAcquireResourceExclusiveLite(header->Resource, TRUE);
+		KeLeaveCriticalRegion();
 	}
 
 	DDbgPrint("DokanAcquireForCreateSection\n");
@@ -93,14 +87,17 @@ DokanAcquireForCreateSection(
 FAST_IO_RELEASE_FILE DokanReleaseForCreateSection;
 VOID
 DokanReleaseForCreateSection(
-   __in PFILE_OBJECT FileObject
+   _In_ PFILE_OBJECT FileObject
 	)
 {
 	PFSRTL_ADVANCED_FCB_HEADER	header;
 
 	header = FileObject->FsContext;
+
 	if (header && header->Resource) {
+		KeEnterCriticalRegion();
 		ExReleaseResourceLite(header->Resource);
+		KeLeaveCriticalRegion();
 	}
 
 	DDbgPrint("DokanReleaseForCreateSection\n");
@@ -108,12 +105,14 @@ DokanReleaseForCreateSection(
 
 NTSTATUS
 DokanFilterCallbackAcquireForCreateSection(
-	__in PFS_FILTER_CALLBACK_DATA CallbackData,
-    __out PVOID *CompletionContext
+	_In_ PFS_FILTER_CALLBACK_DATA CallbackData,
+	_Outptr_result_maybenull_ PVOID *CompletionContext
 	)
 {
 	PFSRTL_ADVANCED_FCB_HEADER	header;
 	DDbgPrint("DokanFilterCallbackAcquireForCreateSection\n");
+
+	CompletionContext = NULL;
 
 	header = CallbackData->FileObject->FsContext;
 
@@ -131,8 +130,8 @@ DokanFilterCallbackAcquireForCreateSection(
 
 NTSTATUS
 DriverEntry(
-	__in PDRIVER_OBJECT  DriverObject,
-	__in PUNICODE_STRING RegistryPath
+	_In_ PDRIVER_OBJECT  DriverObject,
+	_In_ PUNICODE_STRING RegistryPath
 	)
 
 /*++
@@ -165,80 +164,96 @@ Return Value:
 	status = DokanCreateGlobalDiskDevice(DriverObject, &dokanGlobal);
 
 	if (status != STATUS_SUCCESS) {
+		DDbgPrint("  Could not create global disk device\n");
 		return status;
 	}
-	//
-	// Set up dispatch entry points for the driver.
-	//
-	DriverObject->DriverUnload								= DokanUnload;
 
-	DriverObject->MajorFunction[IRP_MJ_CREATE]				= DokanDispatchCreate;
-	DriverObject->MajorFunction[IRP_MJ_CLOSE]				= DokanDispatchClose;
-	DriverObject->MajorFunction[IRP_MJ_CLEANUP] 			= DokanDispatchCleanup;
+	__try
+	{
+		//
+		// Set up dispatch entry points for the driver.
+		//
+		DriverObject->DriverUnload = DokanUnload;
 
-	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL]		= DokanDispatchDeviceControl;
-	DriverObject->MajorFunction[IRP_MJ_FILE_SYSTEM_CONTROL] = DokanDispatchFileSystemControl;
-	DriverObject->MajorFunction[IRP_MJ_DIRECTORY_CONTROL]   = DokanDispatchDirectoryControl;
+		DriverObject->MajorFunction[IRP_MJ_CREATE] = DokanDispatchCreate;
+		DriverObject->MajorFunction[IRP_MJ_CLOSE] = DokanDispatchClose;
+		DriverObject->MajorFunction[IRP_MJ_CLEANUP] = DokanDispatchCleanup;
 
-	DriverObject->MajorFunction[IRP_MJ_QUERY_INFORMATION]   = DokanDispatchQueryInformation;
-    DriverObject->MajorFunction[IRP_MJ_SET_INFORMATION]     = DokanDispatchSetInformation;
+		DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = DokanDispatchDeviceControl;
+		DriverObject->MajorFunction[IRP_MJ_FILE_SYSTEM_CONTROL] = DokanDispatchFileSystemControl;
+		DriverObject->MajorFunction[IRP_MJ_DIRECTORY_CONTROL] = DokanDispatchDirectoryControl;
 
-    DriverObject->MajorFunction[IRP_MJ_QUERY_VOLUME_INFORMATION]	= DokanDispatchQueryVolumeInformation;
-    DriverObject->MajorFunction[IRP_MJ_SET_VOLUME_INFORMATION]		= DokanDispatchSetVolumeInformation;
+		DriverObject->MajorFunction[IRP_MJ_QUERY_INFORMATION] = DokanDispatchQueryInformation;
+		DriverObject->MajorFunction[IRP_MJ_SET_INFORMATION] = DokanDispatchSetInformation;
 
-	DriverObject->MajorFunction[IRP_MJ_READ]				= DokanDispatchRead;
-	DriverObject->MajorFunction[IRP_MJ_WRITE]				= DokanDispatchWrite;
-	DriverObject->MajorFunction[IRP_MJ_FLUSH_BUFFERS]		= DokanDispatchFlush;
+		DriverObject->MajorFunction[IRP_MJ_QUERY_VOLUME_INFORMATION] = DokanDispatchQueryVolumeInformation;
+		DriverObject->MajorFunction[IRP_MJ_SET_VOLUME_INFORMATION] = DokanDispatchSetVolumeInformation;
 
-	DriverObject->MajorFunction[IRP_MJ_SHUTDOWN]            = DokanDispatchShutdown;
-	DriverObject->MajorFunction[IRP_MJ_PNP]					= DokanDispatchPnp;
+		DriverObject->MajorFunction[IRP_MJ_READ] = DokanDispatchRead;
+		DriverObject->MajorFunction[IRP_MJ_WRITE] = DokanDispatchWrite;
+		DriverObject->MajorFunction[IRP_MJ_FLUSH_BUFFERS] = DokanDispatchFlush;
 
-	DriverObject->MajorFunction[IRP_MJ_LOCK_CONTROL]		= DokanDispatchLock;
+		DriverObject->MajorFunction[IRP_MJ_SHUTDOWN] = DokanDispatchShutdown;
+		DriverObject->MajorFunction[IRP_MJ_PNP] = DokanDispatchPnp;
 
-	DriverObject->MajorFunction[IRP_MJ_QUERY_SECURITY]		= DokanDispatchQuerySecurity;
-	DriverObject->MajorFunction[IRP_MJ_SET_SECURITY]		= DokanDispatchSetSecurity;
+		DriverObject->MajorFunction[IRP_MJ_LOCK_CONTROL] = DokanDispatchLock;
 
-	fastIoDispatch = ExAllocatePool(sizeof(FAST_IO_DISPATCH));
-	// TODO: check fastIoDispatch
+		DriverObject->MajorFunction[IRP_MJ_QUERY_SECURITY] = DokanDispatchQuerySecurity;
+		DriverObject->MajorFunction[IRP_MJ_SET_SECURITY] = DokanDispatchSetSecurity;
 
-	RtlZeroMemory(fastIoDispatch, sizeof(FAST_IO_DISPATCH));
+		fastIoDispatch = ExAllocatePool(sizeof(FAST_IO_DISPATCH));
+		if (fastIoDispatch == NULL)
+		{
+			DDbgPrint("  Could not allocate fastIoDispatch structure\n");
+			status = STATUS_INSUFFICIENT_RESOURCES;
+			__leave;
+		}
+		RtlZeroMemory(fastIoDispatch, sizeof(FAST_IO_DISPATCH));
 
-	fastIoDispatch->SizeOfFastIoDispatch = sizeof(FAST_IO_DISPATCH);
-    fastIoDispatch->FastIoCheckIfPossible = DokanFastIoCheckIfPossible;
-    //fastIoDispatch->FastIoRead = DokanFastIoRead;
-	fastIoDispatch->FastIoRead = FsRtlCopyRead;
-	fastIoDispatch->FastIoWrite = FsRtlCopyWrite;
-	fastIoDispatch->AcquireFileForNtCreateSection = DokanAcquireForCreateSection;
-	fastIoDispatch->ReleaseFileForNtCreateSection = DokanReleaseForCreateSection;
-    fastIoDispatch->MdlRead = FsRtlMdlReadDev;
-    fastIoDispatch->MdlReadComplete = FsRtlMdlReadCompleteDev;
-    fastIoDispatch->PrepareMdlWrite = FsRtlPrepareMdlWriteDev;
-    fastIoDispatch->MdlWriteComplete = FsRtlMdlWriteCompleteDev;
+		fastIoDispatch->SizeOfFastIoDispatch = sizeof(FAST_IO_DISPATCH);
+		fastIoDispatch->FastIoCheckIfPossible = DokanFastIoCheckIfPossible;
+		fastIoDispatch->FastIoRead = FsRtlCopyRead;
+		fastIoDispatch->FastIoWrite = FsRtlCopyWrite;
+		fastIoDispatch->AcquireFileForNtCreateSection = DokanAcquireForCreateSection;
+		fastIoDispatch->ReleaseFileForNtCreateSection = DokanReleaseForCreateSection;
+		fastIoDispatch->MdlRead = FsRtlMdlReadDev;
+		fastIoDispatch->MdlReadComplete = FsRtlMdlReadCompleteDev;
+		fastIoDispatch->PrepareMdlWrite = FsRtlPrepareMdlWriteDev;
+		fastIoDispatch->MdlWriteComplete = FsRtlMdlWriteCompleteDev;
 
-	DriverObject->FastIoDispatch = fastIoDispatch;
+#pragma warning(suppress: 28175)
+		DriverObject->FastIoDispatch = fastIoDispatch;
 
 
-	ExInitializeNPagedLookasideList(
-		&DokanIrpEntryLookasideList, NULL, NULL, 0, sizeof(IRP_ENTRY), TAG, 0);
+		ExInitializeNPagedLookasideList(
+			&DokanIrpEntryLookasideList, NULL, NULL, 0, sizeof(IRP_ENTRY), TAG, 0);
 
 
 #if _WIN32_WINNT < 0x0501
-    RtlInitUnicodeString(&functionName, L"FsRtlTeardownPerStreamContexts");
-    DokanFsRtlTeardownPerStreamContexts = MmGetSystemRoutineAddress(&functionName);
+		RtlInitUnicodeString(&functionName, L"FsRtlTeardownPerStreamContexts");
+		DokanFsRtlTeardownPerStreamContexts = MmGetSystemRoutineAddress(&functionName);
 #endif
 
-    RtlZeroMemory(&filterCallbacks, sizeof(FS_FILTER_CALLBACKS));
+		RtlZeroMemory(&filterCallbacks, sizeof(FS_FILTER_CALLBACKS));
 
-	// only be used by filter driver?
-	filterCallbacks.SizeOfFsFilterCallbacks = sizeof(FS_FILTER_CALLBACKS);
-	filterCallbacks.PreAcquireForSectionSynchronization = DokanFilterCallbackAcquireForCreateSection;
+		// only be used by filter driver?
+		// TODO: maybe remove
+		filterCallbacks.SizeOfFsFilterCallbacks = sizeof(FS_FILTER_CALLBACKS);
+		filterCallbacks.PreAcquireForSectionSynchronization = DokanFilterCallbackAcquireForCreateSection;
 
-	status = FsRtlRegisterFileSystemFilterCallbacks(DriverObject, &filterCallbacks);
+		status = FsRtlRegisterFileSystemFilterCallbacks(DriverObject, &filterCallbacks);
 
-	if (!NT_SUCCESS(status)) {
-		IoDeleteDevice(dokanGlobal->DeviceObject);
-		DDbgPrint("  FsRtlRegisterFileSystemFilterCallbacks returned 0x%x\n", status);
-		return status;
+		if (!NT_SUCCESS(status)) {
+			DDbgPrint("  FsRtlRegisterFileSystemFilterCallbacks returned 0x%x\n", status);
+			__leave;
+		}
+	}
+	__finally
+	{
+		if (!NT_SUCCESS(status))
+		{
+			IoDeleteDevice(dokanGlobal->DeviceObject);
+		}
 	}
 
 
@@ -250,7 +265,7 @@ Return Value:
 
 VOID
 DokanUnload(
-	__in PDRIVER_OBJECT DriverObject
+	_In_ PDRIVER_OBJECT DriverObject
 	)
 /*++
 
@@ -294,8 +309,8 @@ Return Value:
 
 NTSTATUS
 DokanDispatchShutdown(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
    )
 {
 	PAGED_CODE();
@@ -314,8 +329,8 @@ DokanDispatchShutdown(
 
 NTSTATUS
 DokanDispatchPnp(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
    )
 {
 	PIO_STACK_LOCATION	irpSp;
@@ -366,8 +381,8 @@ DokanDispatchPnp(
 
 BOOLEAN
 DokanNoOpAcquire(
-    __in PVOID Fcb,
-    __in BOOLEAN Wait
+    _In_ PVOID Fcb,
+    _In_ BOOLEAN Wait
     )
 {
     UNREFERENCED_PARAMETER( Fcb );
@@ -387,7 +402,7 @@ DokanNoOpAcquire(
 
 VOID
 DokanNoOpRelease(
-    __in PVOID Fcb
+    _In_ PVOID Fcb
     )
 {
 	DDbgPrint("==> DokanNoOpRelease\n");
@@ -407,7 +422,7 @@ DokanNoOpRelease(
 
 VOID
 DokanPrintNTStatus(
-	NTSTATUS	Status)
+	_In_ NTSTATUS	Status)
 {
 	PrintStatus(Status, STATUS_SUCCESS);
 	PrintStatus(Status, STATUS_NO_MORE_FILES);
@@ -434,10 +449,10 @@ DokanPrintNTStatus(
 
 VOID
 DokanNotifyReportChange0(
-	__in PDokanFCB			Fcb,
-	__in PUNICODE_STRING	FileName,
-	__in ULONG				FilterMatch,
-	__in ULONG				Action)
+	_In_ PDokanFCB			Fcb,
+	_In_ PUNICODE_STRING	FileName,
+	_In_ ULONG				FilterMatch,
+	_In_ ULONG				Action)
 {
 	USHORT	nameOffset;
 
@@ -471,9 +486,9 @@ DokanNotifyReportChange0(
 
 VOID
 DokanNotifyReportChange(
-	__in PDokanFCB	Fcb,
-	__in ULONG		FilterMatch,
-	__in ULONG		Action)
+	_In_ PDokanFCB	Fcb,
+	_In_ ULONG		FilterMatch,
+	_In_ ULONG		Action)
 {
 	ASSERT(Fcb != NULL);
 	DokanNotifyReportChange0(Fcb, &Fcb->FileName, FilterMatch, Action);
@@ -482,7 +497,7 @@ DokanNotifyReportChange(
 
 VOID
 PrintIdType(
-	__in VOID* Id)
+	_In_ VOID* Id)
 {
 	if (Id == NULL) {
 		DDbgPrint("    IdType = NULL\n");
@@ -513,8 +528,8 @@ PrintIdType(
 
 BOOLEAN
 DokanCheckCCB(
-	__in PDokanDCB	Dcb,
-	__in PDokanCCB	Ccb)
+	_In_ PDokanDCB	Dcb,
+	_In_opt_ PDokanCCB	Ccb)
 {
 	ASSERT(Dcb != NULL);
 	if (GetIdentifierType(Dcb) != DCB) {
@@ -541,11 +556,60 @@ DokanCheckCCB(
 	return TRUE;
 }
 
+_Success_(return)
+BOOLEAN DokanGetDispatchParameters(
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_In_opt_ PFILE_OBJECT FileObject,
+	_Outptr_result_nullonfailure_ PDokanVCB *Vcb,
+	_Outptr_result_nullonfailure_ PDokanCCB *Ccb,
+	_Outptr_result_nullonfailure_ PDokanFCB *Fcb
+	)
+{
+	PDokanVCB vcb = NULL;
+	PDokanCCB ccb = NULL;
+	PDokanFCB fcb = NULL;
+	*Vcb = vcb;
+	*Ccb = ccb;
+	*Fcb = fcb;
+
+	if (FileObject == NULL)
+	{
+		DDbgPrint("  FileObject == NULL\n");
+		return FALSE;
+	}
+
+	vcb = DeviceObject->DeviceExtension;
+	if (GetIdentifierType(vcb) != VCB)
+	{
+		DDbgPrint("  Invalid VCB\n");
+		return FALSE;
+	}
+
+	ccb = FileObject->FsContext2;
+	if (!DokanCheckCCB((vcb)->Dcb, ccb) || GetIdentifierType(ccb) != CCB)
+	{
+		DDbgPrint("  Invalid CCB\n");
+		return FALSE;
+	}
+
+	fcb = ccb->Fcb;
+	if (fcb == NULL || GetIdentifierType(fcb) != FCB)
+	{
+		DDbgPrint("  Invalid FCB\n");
+		return FALSE;
+	}
+	*Vcb = vcb;
+	*Ccb = ccb;
+	*Fcb = fcb;
+
+	return TRUE;
+}
+
 
 NTSTATUS
 DokanAllocateMdl(
-	__in PIRP	Irp,
-	__in ULONG	Length
+	_In_ PIRP	Irp,
+	_In_ ULONG	Length
 	)
 {
 	if (Irp->MdlAddress == NULL) {
@@ -571,7 +635,7 @@ DokanAllocateMdl(
 
 VOID
 DokanFreeMdl(
-	__in PIRP	Irp
+	_In_ PIRP	Irp
 	)
 {
 	if (Irp->MdlAddress != NULL) {

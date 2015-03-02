@@ -24,8 +24,8 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 NTSTATUS
 DokanUserFsRequest(
-	__in PDEVICE_OBJECT	DeviceObject,
-	__in PIRP			Irp
+	_In_ PDEVICE_OBJECT	DeviceObject,
+	_In_ PIRP			Irp
 	)
 {
 	NTSTATUS			status = STATUS_NOT_IMPLEMENTED;
@@ -283,11 +283,11 @@ DokanUserFsRequest(
 }
 
 
-
+#pragma alloc_text("PAGED_CODE", DokanDispatchFileSystemControl)
 NTSTATUS
 DokanDispatchFileSystemControl(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
 	)
 {
 	NTSTATUS			status = STATUS_INVALID_PARAMETER;

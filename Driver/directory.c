@@ -23,20 +23,20 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 NTSTATUS
 DokanQueryDirectory(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP			Irp);
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_In_ PIRP			Irp);
 
 NTSTATUS
 DokanNotifyChangeDirectory(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP			Irp);
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_In_ PIRP			Irp);
 
 
-
+#pragma alloc_text("PAGED_CODE", DokanDispatchDirectoryControl)
 NTSTATUS
 DokanDispatchDirectoryControl(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
    )
 {
 	NTSTATUS			status		= STATUS_NOT_IMPLEMENTED;
@@ -101,8 +101,8 @@ DokanDispatchDirectoryControl(
 
 NTSTATUS
 DokanQueryDirectory(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP			Irp)
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_In_ PIRP			Irp)
 {
 	PFILE_OBJECT		fileObject;
 	PIO_STACK_LOCATION	irpSp;
@@ -255,6 +255,7 @@ DokanQueryDirectory(
 
 	// if search pattern is specified, copy it to EventContext
 	if (ccb->SearchPatternLength) {
+		ASSERT(ccb->SearchPattern != NULL);
 		PVOID searchBuffer;
 
 		eventContext->Directory.SearchPatternLength = ccb->SearchPatternLength;
@@ -281,8 +282,8 @@ DokanQueryDirectory(
 
 NTSTATUS
 DokanNotifyChangeDirectory(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP			Irp)
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_In_ PIRP			Irp)
 {
 	PDokanCCB			ccb;
 	PDokanFCB			fcb;
@@ -329,8 +330,8 @@ DokanNotifyChangeDirectory(
 
 VOID
 DokanCompleteDirectoryControl(
-	__in PIRP_ENTRY			IrpEntry,
-	__in PEVENT_INFORMATION	EventInfo
+	_In_ PIRP_ENTRY			IrpEntry,
+	_In_ PEVENT_INFORMATION	EventInfo
 	)
 {
 	PIRP				irp;

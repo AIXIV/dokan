@@ -22,8 +22,8 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 NTSTATUS
 DokanDispatchQuerySecurity(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
 	)
 {
 	PIO_STACK_LOCATION	irpSp;
@@ -144,8 +144,8 @@ DokanDispatchQuerySecurity(
 
 VOID
 DokanCompleteQuerySecurity(
-	__in PIRP_ENTRY		IrpEntry,
-	__in PEVENT_INFORMATION EventInfo
+	_In_ PIRP_ENTRY		IrpEntry,
+	_In_ PEVENT_INFORMATION EventInfo
 	)
 {
 	PIRP		irp;
@@ -212,8 +212,8 @@ DokanCompleteQuerySecurity(
 
 NTSTATUS
 DokanDispatchSetSecurity(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
 	)
 {
 	PIO_STACK_LOCATION	irpSp;
@@ -246,8 +246,8 @@ DokanDispatchSetSecurity(
 		}
 
 		vcb = DeviceObject->DeviceExtension;
-		if (GetIdentifierType(vcb) != VCB) {
-			DbgPrint("    DeviceExtension != VCB\n");
+		if (GetIdentifierType(vcb) != VCB ||
+			!DokanCheckCCB(vcb->Dcb, fileObject->FsContext2)) {
 			status = STATUS_INVALID_PARAMETER;
 			__leave;
 		}
@@ -255,14 +255,22 @@ DokanDispatchSetSecurity(
 
 		DDbgPrint("  ProcessId %lu\n", IoGetRequestorProcessId(Irp));
 		DokanPrintFileName(fileObject);
-
 		ccb = fileObject->FsContext2;
 		if (ccb == NULL) {
 			DDbgPrint("    ccb == NULL\n");
 			status = STATUS_INVALID_PARAMETER;
 			__leave;
 		}
+		ASSERT(ccb != NULL);
+
 		fcb = ccb->Fcb;
+		if (fcb == NULL)
+		{
+			DDbgPrint("fcb == NULL");
+			status = STATUS_INVALID_PARAMETER;
+			__leave;
+		}
+		ASSERT(fcb != NULL);
 
 		securityInfo = &irpSp->Parameters.SetSecurity.SecurityInformation;
 
@@ -336,8 +344,8 @@ DokanDispatchSetSecurity(
 
 VOID
 DokanCompleteSetSecurity(
-	__in PIRP_ENTRY		IrpEntry,
-	__in PEVENT_INFORMATION EventInfo
+	_In_ PIRP_ENTRY		IrpEntry,
+	_In_ PEVENT_INFORMATION EventInfo
 	)
 {
 	PIRP				irp;

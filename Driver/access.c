@@ -22,8 +22,8 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 NTSTATUS
 DokanGetAccessToken(
-   __in PDEVICE_OBJECT	DeviceObject,
-   __in PIRP			Irp
+   _In_ PDEVICE_OBJECT	DeviceObject,
+   _Inout_ PIRP			Irp
    )
 {
 	KIRQL				oldIrql;

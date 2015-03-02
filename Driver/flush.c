@@ -21,11 +21,11 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "dokan.h"
 
-
+#pragma alloc_text("PAGED_CODE", DokanDispatchFlush)
 NTSTATUS
 DokanDispatchFlush(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
 	)
 {
 	PIO_STACK_LOCATION	irpSp;
@@ -114,8 +114,8 @@ DokanDispatchFlush(
 
 VOID
 DokanCompleteFlush(
-	 __in PIRP_ENTRY			IrpEntry,
-	 __in PEVENT_INFORMATION	EventInfo
+	 _In_ PIRP_ENTRY			IrpEntry,
+	 _In_ PEVENT_INFORMATION	EventInfo
 	 )
 {
 	PIRP				irp;
