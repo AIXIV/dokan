@@ -37,7 +37,12 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 // DEFINES
 //
 
+
+#ifndef _DEBUG
 #define DOKAN_DEBUG_DEFAULT 0
+#else
+#define DOKAN_DEBUG_DEFAULT 1
+#endif
 
 extern ULONG g_Debug;
 
