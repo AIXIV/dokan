@@ -349,6 +349,7 @@ Return Value:
 	PWCHAR				fileName;
 	BOOLEAN				needBackSlashAfterRelatedFile = FALSE;
 	HANDLE				accessTokenHandle;
+	PCUNICODE_STRING	relatedFileObjectName = NULL;
 
 	PAGED_CODE();
 
@@ -409,29 +410,29 @@ Return Value:
 			fileObject->Vpb = dcb->DeviceObject->Vpb;
 		}
 
-		if ((relatedFileObject == NULL || relatedFileObject->FileName.Length == 0) &&
-			fileObject->FileName.Length == 0) {
-
-			DDbgPrint("   request for FS device\n");
-
-			if (irpSp->Parameters.Create.Options & FILE_DIRECTORY_FILE) {
-				status = STATUS_NOT_A_DIRECTORY;
-			} else {
-				SetFileObjectForVCB(fileObject, vcb);
-				info = FILE_OPENED;
-				status = STATUS_SUCCESS;
-			}
-			__leave;
-		}
-
 	   if (fileObject->FileName.Length > sizeof(WCHAR) &&
 		   fileObject->FileName.Buffer[fileObject->FileName.Length/sizeof(WCHAR)-1] == L'\\') {
 			fileObject->FileName.Length -= sizeof(WCHAR);
 	   }
 
    		fileNameLength = fileObject->FileName.Length;
-		if (relatedFileObject) {
-			fileNameLength += relatedFileObject->FileName.Length;
+		if (relatedFileObject)
+		{
+			PDokanCCB relatedCCB = relatedFileObject->FsContext2;
+			if (!DokanCheckCCB(vcb->Dcb, relatedCCB)) {
+				status = STATUS_INVALID_PARAMETER;
+				__leave;
+			}
+			PDokanFCB relatedFCB = relatedCCB->Fcb;
+			if (relatedFCB == NULL)
+			{
+				status = STATUS_INVALID_PARAMETER;
+				__leave;
+			}
+
+			relatedFileObjectName = &(relatedFCB->FileName);
+
+			fileNameLength += relatedFileObjectName->Length;
 
 			if (fileObject->FileName.Length > 0 &&
 				fileObject->FileName.Buffer[0] == '\\') {
@@ -439,11 +440,27 @@ Return Value:
 				status = STATUS_OBJECT_NAME_INVALID;
 				__leave;
 			}
-			if (relatedFileObject->FileName.Length > 0 &&
-				relatedFileObject->FileName.Buffer[relatedFileObject->FileName.Length/sizeof(WCHAR)-1] != '\\') {
+			if (relatedFileObjectName->Length > 0 && relatedFileObjectName->Buffer[relatedFileObjectName->Length / sizeof(WCHAR) - 1])
+			{
 				needBackSlashAfterRelatedFile = TRUE;
 				fileNameLength += sizeof(WCHAR);
 			}
+		}
+
+		if ((relatedFileObject == NULL || relatedFileObjectName->Length == 0) &&
+			fileObject->FileName.Length == 0) {
+
+			DDbgPrint("   request for FS device\n");
+
+			if (irpSp->Parameters.Create.Options & FILE_DIRECTORY_FILE) {
+				status = STATUS_NOT_A_DIRECTORY;
+			}
+			else {
+				SetFileObjectForVCB(fileObject, vcb);
+				info = FILE_OPENED;
+				status = STATUS_SUCCESS;
+			}
+			__leave;
 		}
 
 		// don't open file like stream
@@ -465,23 +482,25 @@ Return Value:
 
 		RtlZeroMemory(fileName, fileNameLength + sizeof(WCHAR));
 
-		if (relatedFileObject != NULL) {
-			DDbgPrint("  RelatedFileName:%wZ\n", &relatedFileObject->FileName);
+		if (relatedFileObjectName != NULL) {
+			//PWCHAR fileNameWritePos = fileName;
+			DDbgPrint("  RelatedFileName:%wZ\n", relatedFileObjectName);
 
 			// copy the file name of related file object
-			RtlCopyMemory(fileName,
-							relatedFileObject->FileName.Buffer,
-							relatedFileObject->FileName.Length);
+			RtlCopyMemory(fileName, relatedFileObjectName->Buffer, relatedFileObjectName->Length);
+			//fileNameWritePos += relatedFileObjectName->Length / sizeof(WCHAR);
 
-			if (needBackSlashAfterRelatedFile) {
-				((PWCHAR)fileName)[relatedFileObject->FileName.Length/sizeof(WCHAR)] = '\\';
+			if (needBackSlashAfterRelatedFile)
+			{
+				((PWCHAR)fileName)[relatedFileObjectName->Length / sizeof(WCHAR)] = '\\'; // TODO: not L'\\' ??
+				//fileNameWritePos += sizeof(WCHAR);
 			}
 			// copy the file name of fileObject
 			RtlCopyMemory((PCHAR)fileName +
-							relatedFileObject->FileName.Length +
-							(needBackSlashAfterRelatedFile? sizeof(WCHAR) : 0),
-							fileObject->FileName.Buffer,
-							fileObject->FileName.Length);
+				relatedFileObjectName->Length +
+				(needBackSlashAfterRelatedFile ? sizeof(WCHAR) : 0),
+				fileObject->FileName.Buffer,
+				fileObject->FileName.Length);
 
 		} else {
 			// if related file object is not specifed, copy the file name of file object
