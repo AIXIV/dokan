@@ -189,8 +189,7 @@ DokanMountControl(_In_ PDOKAN_CONTROL Control)
 
 
 
-BOOL DOKANAPI
-DokanServiceInstall(
+BOOL DokanServiceInstall(
 	_In_ LPCWSTR	ServiceName,
 	_In_ DWORD		ServiceType,
 	_In_ LPCWSTR	ServiceFullPath)
@@ -232,9 +231,7 @@ DokanServiceInstall(
 	}
 }
 
-
-BOOL DOKANAPI
-DokanServiceDelete(
+BOOL DokanServiceDelete(
 	_In_ LPCWSTR	ServiceName)
 {
 	if (DokanServiceCheck(ServiceName)) {
@@ -248,6 +245,25 @@ DokanServiceDelete(
 	return TRUE;
 }
 
+BOOL DOKANAPI DokanDriverInstall(_In_ LPCWSTR DriverPath)
+{
+	return DokanServiceInstall(DOKAN_DRIVER_SERVICE, SERVICE_FILE_SYSTEM_DRIVER, DriverPath);
+}
+
+BOOL DOKANAPI DokanDriverDelete(VOID)
+{
+	return DokanServiceDelete(DOKAN_DRIVER_SERVICE);
+}
+
+BOOL DOKANAPI DokanMounterInstall(_In_ LPCWSTR MounterPath)
+{
+	return DokanServiceInstall(DOKAN_MOUNTER_SERVICE, SERVICE_WIN32_OWN_PROCESS, MounterPath);
+}
+
+BOOL DOKANAPI DokanMounterDelete(VOID)
+{
+	return DokanServiceDelete(DOKAN_MOUNTER_SERVICE);
+}
 
 BOOL DOKANAPI
 DokanUnmount(

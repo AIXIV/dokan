@@ -121,6 +121,78 @@ int Unmount(_In_ LPCWSTR	MountPoint, _In_ BOOL ForceUnmount)
 		(argv)[(index)][0] == L'/')? \
 		towlower((argv)[(index)][1]) : L'\0')
 
+VOID InstallDriver(_In_ LPCWSTR DriverPath)
+{
+	if (DokanDriverInstall(DriverPath))
+	{
+		fprintf(stderr, "driver install ok\n");
+	}
+	else
+	{
+		fprintf(stderr, "driver install failed\n");
+	}
+}
+
+VOID InstallMounter(_In_ LPCWSTR MounterPath)
+{
+	if (DokanMounterInstall(MounterPath))
+	{
+		fprintf(stderr, "mounter install ok\n");
+	}
+	else
+	{
+		fprintf(stderr, "mounter install failed\n");
+	}
+}
+
+VOID RemoveDriver(VOID)
+{
+	if (DokanDriverDelete())
+	{
+		fprintf(stderr, "driver remove ok\n");
+	}
+	else
+	{
+		fprintf(stderr, "driver remove failed\n");
+	}
+}
+
+VOID RemoveMounter(VOID)
+{
+	if (DokanMounterDelete())
+	{
+		fprintf(stderr, "mounter remove ok\n");
+	}
+	else
+	{
+		fprintf(stderr, "mounter remove failed\n");
+	}
+}
+
+VOID InstallNetworkProvider(VOID)
+{
+	if (DokanNetworkProviderInstall())
+	{
+		fprintf(stderr, "network provider install ok\n");
+	}
+	else
+	{
+		fprintf(stderr, "network provider install failed\n");
+	}
+}
+
+VOID RemoveNetworkProvider(VOID)
+{
+	if (DokanNetworkProviderUninstall())
+	{
+		fprintf(stderr, "network provider remove ok\n");
+	}
+	else
+	{
+		fprintf(stderr, "network provider remove failed\n");
+	}
+}
+
 int __cdecl
 wmain(_In_ int argc, _In_ PWCHAR argv[])
 {
@@ -177,72 +249,42 @@ wmain(_In_ int argc, _In_ PWCHAR argv[])
 
 	switch(towlower(argv[1][1])) {
 	case L'i':
-		if (type ==  L'd') {
-			if (DokanServiceInstall(DOKAN_DRIVER_SERVICE,
-									SERVICE_FILE_SYSTEM_DRIVER,
-									driverFullPath))
-				fprintf(stderr, "driver install ok\n");
-			else
-				fprintf(stderr, "driver install failed\n");
-
-		} else if (type == L's') {
-			if (DokanServiceInstall(DOKAN_MOUNTER_SERVICE,
-									SERVICE_WIN32_OWN_PROCESS,
-									mounterFullPath))
-				fprintf(stderr, "mounter install ok\n");
-			else
-				fprintf(stderr, "mounter install failed\n");
-		
-		} else if (type == L'a') {
-			if (DokanServiceInstall(DOKAN_DRIVER_SERVICE,
-									SERVICE_FILE_SYSTEM_DRIVER,
-									driverFullPath))
-				fprintf(stderr, "driver install ok\n");
-			else
-				fprintf(stderr, "driver install failed\n");
-
-			if (DokanServiceInstall(DOKAN_MOUNTER_SERVICE,
-									SERVICE_WIN32_OWN_PROCESS,
-									mounterFullPath))
-				fprintf(stderr, "mounter install ok\n");
-			else
-				fprintf(stderr, "mounter install failed\n");
-		} else if (type == L'n') {
-			if (DokanNetworkProviderInstall())
-				fprintf(stderr, "network provider install ok\n");
-			else
-				fprintf(stderr, "network provider install failed\n");
+		switch (type)
+		{
+		case L'd':
+			InstallDriver(driverFullPath);
+			break;
+		case L's':
+		case L'm':
+			InstallMounter(mounterFullPath);
+			break;
+		case L'a':
+			InstallDriver(driverFullPath);
+			InstallMounter(mounterFullPath);
+			break;
+		case L'n':
+			InstallNetworkProvider();
+			break;
 		}
 		break;
 
 	case L'r':
-		if (type == L'd') {
-			if (DokanServiceDelete(DOKAN_DRIVER_SERVICE))
-				fprintf(stderr, "driver remove ok\n");
-			else
-				fprintf(stderr, "driver remvoe failed\n");
-		
-		} else if (type == L's') {
-			if (DokanServiceDelete(DOKAN_MOUNTER_SERVICE))
-				fprintf(stderr, "mounter remove ok\n");
-			else
-				fprintf(stderr, "mounter remvoe failed\n");	
-		
-		} else if (type == L'a') {
-			if (DokanServiceDelete(DOKAN_MOUNTER_SERVICE))
-				fprintf(stderr, "mounter remove ok\n");
-			else
-				fprintf(stderr, "mounter remvoe failed\n");	
-
-			if (DokanServiceDelete(DOKAN_DRIVER_SERVICE))
-				fprintf(stderr, "driver remove ok\n");
-			else
-				fprintf(stderr, "driver remvoe failed\n");
-		} else if (type == L'n') {
-			if (DokanNetworkProviderUninstall())
-				fprintf(stderr, "network provider remove ok\n");
-			else
-				fprintf(stderr, "network provider remove failed\n");
+		switch (type)
+		{
+		case L'd':
+			RemoveDriver();
+			break;
+		case L's':
+		case L'm':
+			RemoveMounter();
+			break;
+		case L'a':
+			RemoveDriver();
+			RemoveMounter();
+			break;
+		case L'n':
+			RemoveNetworkProvider();
+			break;
 		}
 		break;
 	case L'd':
