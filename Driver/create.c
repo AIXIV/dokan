@@ -483,24 +483,20 @@ Return Value:
 		RtlZeroMemory(fileName, fileNameLength + sizeof(WCHAR));
 
 		if (relatedFileObjectName != NULL) {
-			//PWCHAR fileNameWritePos = fileName;
+			PWCHAR fileNameWritePos = fileName;
 			DDbgPrint("  RelatedFileName:%wZ\n", relatedFileObjectName);
 
 			// copy the file name of related file object
 			RtlCopyMemory(fileName, relatedFileObjectName->Buffer, relatedFileObjectName->Length);
-			//fileNameWritePos += relatedFileObjectName->Length / sizeof(WCHAR);
+			fileNameWritePos += relatedFileObjectName->Length / sizeof(WCHAR);
 
 			if (needBackSlashAfterRelatedFile)
 			{
-				((PWCHAR)fileName)[relatedFileObjectName->Length / sizeof(WCHAR)] = '\\'; // TODO: not L'\\' ??
-				//fileNameWritePos += sizeof(WCHAR);
+				((PWCHAR)fileName)[relatedFileObjectName->Length / sizeof(WCHAR)] = L'\\';
+				++fileNameWritePos;
 			}
 			// copy the file name of fileObject
-			RtlCopyMemory((PCHAR)fileName +
-				relatedFileObjectName->Length +
-				(needBackSlashAfterRelatedFile ? sizeof(WCHAR) : 0),
-				fileObject->FileName.Buffer,
-				fileObject->FileName.Length);
+			RtlCopyMemory((PCHAR)fileNameWritePos, fileObject->FileName.Buffer, fileObject->FileName.Length);
 
 		} else {
 			// if related file object is not specifed, copy the file name of file object
