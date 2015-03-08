@@ -120,16 +120,10 @@ DokanDbgPrintW(_In_ LPCWSTR format, ...)
 		}\
 	} while(0)
 
-
-BOOL DOKANAPI
-DokanServiceInstall(
-	_In_ LPCWSTR	ServiceName,
-	_In_ DWORD	ServiceType,
-	_In_ LPCWSTR ServiceFullPath);
-
-BOOL DOKANAPI
-DokanServiceDelete(
-	_In_ LPCWSTR	ServiceName);
+BOOL DOKANAPI DokanDriverInstall(_In_ LPCWSTR DriverPath);
+BOOL DOKANAPI DokanDriverDelete(VOID);
+BOOL DOKANAPI DokanMounterInstall(_In_ LPCWSTR MounterPath);
+BOOL DOKANAPI DokanMounterDelete(VOID);
 
 BOOL DOKANAPI
 DokanNetworkProviderInstall();
