@@ -77,19 +77,17 @@ Return Value:
 		DokanPrintFileName(fileObject);
 
 		ccb = fileObject->FsContext2;
-		ASSERT(ccb != NULL);
-
-		fcb = ccb->Fcb;
-		ASSERT(fcb != NULL);
 
 		vcb = DeviceObject->DeviceExtension;
 
 		if (GetIdentifierType(vcb) != VCB ||
 			!DokanCheckCCB(vcb->Dcb, ccb)) {
 
-			if (fileObject->FsContext2) {
+			if (ccb) {
+				fcb = ccb->Fcb;
 
 				DDbgPrint("   Free CCB:%p\n", ccb);
+
 				DokanFreeCCB(ccb);
 
 				DokanFreeFCB(fcb);
@@ -98,6 +96,11 @@ Return Value:
 			status = STATUS_SUCCESS;
 			__leave;
 		}
+
+		ASSERT(ccb != NULL);
+
+		fcb = ccb->Fcb;
+		ASSERT(fcb != NULL);
 
 		eventLength = sizeof(EVENT_CONTEXT) + fcb->FileName.Length;
 		eventContext = AllocateEventContext(vcb->Dcb, Irp, eventLength, ccb);
