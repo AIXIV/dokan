@@ -90,6 +90,7 @@ Return Value:
 
 				DokanFreeCCB(ccb);
 
+				ASSERT(fcb != NULL);
 				DokanFreeFCB(fcb);
 			}
 
