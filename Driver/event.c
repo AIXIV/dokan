@@ -640,11 +640,17 @@ DokanEventWrite(
 			else
 				buffer = Irp->AssociatedIrp.SystemBuffer;
 					
-			ASSERT(buffer != NULL);
-			RtlCopyMemory(buffer, eventContext, eventContext->Length);
-						
-			info = eventContext->Length;
-			status = STATUS_SUCCESS;
+			if (buffer != NULL)
+			{
+				RtlCopyMemory(buffer, eventContext, eventContext->Length);
+
+				info = eventContext->Length;
+				status = STATUS_SUCCESS;
+			}
+			else
+			{
+				status = STATUS_INSUFFICIENT_RESOURCES;
+			}
 		}
 
 		DokanFreeEventContext(eventContext);
