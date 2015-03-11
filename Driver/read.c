@@ -69,15 +69,8 @@ Return Value:
 		irpSp		= IoGetCurrentIrpStackLocation(Irp);
 		fileObject	= irpSp->FileObject;
 
-		if (fileObject == NULL) {
-			DDbgPrint("  fileObject == NULL\n");
-			status = STATUS_INVALID_PARAMETER;
-			__leave;
-		}
-
-		vcb = DeviceObject->DeviceExtension;
-		if (GetIdentifierType(vcb) != VCB ||
-			!DokanCheckCCB(vcb->Dcb, fileObject->FsContext2)) {
+		if (!DokanGetDispatchParameters(DeviceObject, fileObject, &vcb, &ccb, &fcb))
+		{
 			status = STATUS_INVALID_PARAMETER;
 			__leave;
 		}
@@ -113,12 +106,6 @@ Return Value:
 				__leave;
 			}
 		}
-
-		ccb	= fileObject->FsContext2;
-		ASSERT(ccb != NULL);
-
-		fcb	= ccb->Fcb;
-		ASSERT(fcb != NULL);
 
 		if (fcb->Flags & DOKAN_FILE_DIRECTORY) {
 			DDbgPrint("   DOKAN_FILE_DIRECTORY %p\n", fcb);
@@ -205,66 +192,76 @@ DokanCompleteRead(
 	PFILE_OBJECT		fileObject;
 
 	fileObject = IrpEntry->FileObject;
-	ASSERT(fileObject != NULL);
 
-	DDbgPrint("==> DokanCompleteRead %wZ\n", &fileObject->FileName);
+	DDbgPrint("==> DokanCompleteRead\n");
 
 	irp   = IrpEntry->Irp;
 	irpSp = IrpEntry->IrpSp;	
 
-	ccb = fileObject->FsContext2;
-	ASSERT(ccb != NULL);
-
-	ccb->UserContext = EventInfo->Context;
-	// DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
-
-	// buffer which is used to copy Read info
-	if (irp->MdlAddress) {
-		//DDbgPrint("   use MDL Address\n");
-		buffer = MmGetSystemAddressForMdlSafe(irp->MdlAddress, NormalPagePriority);
-	} else {
-		//DDbgPrint("   use UserBuffer\n");
-		buffer	= irp->UserBuffer;
+	if (!DokanGetDispatchContext(fileObject, &ccb, NULL))
+	{
+		status = STATUS_INVALID_PARAMETER;
 	}
+	else
+	{
+		DokanPrintFileName(fileObject);
 
-	// available buffer size
-	bufferLen = irpSp->Parameters.Read.Length;
+		ccb->UserContext = EventInfo->Context;
+		// DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
 
-	DDbgPrint("  bufferLen %d, Event.BufferLen %d\n", bufferLen, EventInfo->BufferLength);
+		// buffer which is used to copy Read info
+		if (irp->MdlAddress) {
+			//DDbgPrint("   use MDL Address\n");
+			buffer = MmGetSystemAddressForMdlSafe(irp->MdlAddress, NormalPagePriority);
+		}
+		else {
+			//DDbgPrint("   use UserBuffer\n");
+			buffer = irp->UserBuffer;
+		}
 
-	// buffer is not specified or short of length
-	if (bufferLen == 0 || buffer == NULL || bufferLen < EventInfo->BufferLength) {
-	
-		readLength  = 0;
-		status		= STATUS_INSUFFICIENT_RESOURCES;
-		
-	} else {
-		RtlZeroMemory(buffer, bufferLen);
-		RtlCopyMemory(buffer, EventInfo->Buffer, EventInfo->BufferLength);
+		// available buffer size
+		bufferLen = irpSp->Parameters.Read.Length;
 
-		// read length which is actually read
-		readLength = EventInfo->BufferLength;
-		status = EventInfo->Status;
+		DDbgPrint("  bufferLen %d, Event.BufferLen %d\n", bufferLen, EventInfo->BufferLength);
 
-		if (NT_SUCCESS(status) &&
-			 EventInfo->BufferLength > 0 &&
-			 (fileObject->Flags & FO_SYNCHRONOUS_IO) &&
-			!(irp->Flags & IRP_PAGING_IO)) {
-			// update current byte offset only when synchronous IO and not pagind IO
-			fileObject->CurrentByteOffset.QuadPart =
-				EventInfo->Read.CurrentByteOffset.QuadPart;
-			DDbgPrint("  Updated CurrentByteOffset %I64d\n",
-				fileObject->CurrentByteOffset.QuadPart); 
+		// buffer is not specified or short of length
+		if (bufferLen == 0 || buffer == NULL || bufferLen < EventInfo->BufferLength) {
+
+			readLength = 0;
+			status = STATUS_INSUFFICIENT_RESOURCES;
+
+		}
+		else {
+			RtlZeroMemory(buffer, bufferLen);
+			RtlCopyMemory(buffer, EventInfo->Buffer, EventInfo->BufferLength);
+
+			// read length which is actually read
+			readLength = EventInfo->BufferLength;
+			status = EventInfo->Status;
+
+			if (NT_SUCCESS(status) &&
+				EventInfo->BufferLength > 0 &&
+				(fileObject->Flags & FO_SYNCHRONOUS_IO) &&
+				!(irp->Flags & IRP_PAGING_IO)) {
+				// update current byte offset only when synchronous IO and not pagind IO
+				fileObject->CurrentByteOffset.QuadPart =
+					EventInfo->Read.CurrentByteOffset.QuadPart;
+				DDbgPrint("  Updated CurrentByteOffset %I64d\n",
+					fileObject->CurrentByteOffset.QuadPart);
+			}
 		}
 	}
 
 	if (status == STATUS_SUCCESS) {
 		DDbgPrint("  STATUS_SUCCESS\n");
-	} else if (status == STATUS_INSUFFICIENT_RESOURCES) {
+	}
+	else if (status == STATUS_INSUFFICIENT_RESOURCES) {
 		DDbgPrint("  STATUS_INSUFFICIENT_RESOURCES\n");
-	} else if (status == STATUS_END_OF_FILE) {
+	}
+	else if (status == STATUS_END_OF_FILE) {
 		DDbgPrint("  STATUS_END_OF_FILE\n");
-	} else {
+	}
+	else {
 		DDbgPrint("  status = 0x%X\n", status);
 	}
 

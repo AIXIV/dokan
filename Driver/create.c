@@ -38,9 +38,6 @@ DokanAllocateFCB(
 		return NULL;
 	}
 
-	ASSERT(fcb != NULL);
-	ASSERT(Vcb != NULL);
-
 	RtlZeroMemory(fcb, sizeof(DokanFCB));
 
 	fcb->Identifier.Type = FCB;
@@ -136,8 +133,6 @@ DokanGetFCB(
 			KeLeaveCriticalRegion();
 			return NULL;
 		}
-
-		ASSERT(fcb != NULL);
 
 		fcb->FileName.Buffer = FileName;
 		fcb->FileName.Length = (USHORT)FileNameLength;
@@ -586,75 +581,82 @@ DokanCompleteCreate(
 	irp   = IrpEntry->Irp;
 	irpSp = IrpEntry->IrpSp;	
 
-	DDbgPrint("==> DokanCompleteCreate\n");
-
-	ccb	= IrpEntry->FileObject->FsContext2;
-	ASSERT(ccb != NULL);
-	
-	fcb = ccb->Fcb;
-	ASSERT(fcb != NULL);
-
-	DDbgPrint("  FileName:%wZ\n", &fcb->FileName);
-
-	ccb->UserContext = EventInfo->Context;
-	//DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
-
-	status = EventInfo->Status;
-
 	info = EventInfo->Create.Information;
 
-	switch (info) {
-	case FILE_OPENED:
-		DDbgPrint("  FILE_OPENED\n");
-		break;
-	case FILE_CREATED:
-		DDbgPrint("  FILE_CREATED\n");
-		break;
-	case FILE_OVERWRITTEN:
-		DDbgPrint("  FILE_OVERWRITTEN\n");
-		break;
-	case FILE_DOES_NOT_EXIST:
-		DDbgPrint("  FILE_DOES_NOT_EXIST\n");
-		break;
-	case FILE_EXISTS:
-		DDbgPrint("  FILE_EXISTS\n");
-		break;
-	default:
-		DDbgPrint("  info = %d\n", info);
-		break;
-	}
+	DDbgPrint("==> DokanCompleteCreate\n");
 
-	ExAcquireResourceExclusiveLite(&fcb->Resource, TRUE);
-	if (NT_SUCCESS(status) &&
-		(irpSp->Parameters.Create.Options & FILE_DIRECTORY_FILE ||
-		EventInfo->Create.Flags & DOKAN_FILE_DIRECTORY)) {
-		if (irpSp->Parameters.Create.Options & FILE_DIRECTORY_FILE) {
-			DDbgPrint("  FILE_DIRECTORY_FILE %p\n", fcb);
-		} else {
-			DDbgPrint("  DOKAN_FILE_DIRECTORY %p\n", fcb);
+	if (!DokanGetDispatchContext(IrpEntry->FileObject, &ccb, &fcb))
+	{
+		status = STATUS_INVALID_PARAMETER;
+	}
+	else
+	{
+
+		DDbgPrint("  FileName:%wZ\n", &fcb->FileName);
+
+		ccb->UserContext = EventInfo->Context;
+		//DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
+
+		status = EventInfo->Status;
+
+		info = EventInfo->Create.Information;
+
+		switch (info) {
+		case FILE_OPENED:
+			DDbgPrint("  FILE_OPENED\n");
+			break;
+		case FILE_CREATED:
+			DDbgPrint("  FILE_CREATED\n");
+			break;
+		case FILE_OVERWRITTEN:
+			DDbgPrint("  FILE_OVERWRITTEN\n");
+			break;
+		case FILE_DOES_NOT_EXIST:
+			DDbgPrint("  FILE_DOES_NOT_EXIST\n");
+			break;
+		case FILE_EXISTS:
+			DDbgPrint("  FILE_EXISTS\n");
+			break;
+		default:
+			DDbgPrint("  info = %d\n", info);
+			break;
 		}
-		fcb->Flags |= DOKAN_FILE_DIRECTORY;
-	}
-	ExReleaseResourceLite(&fcb->Resource);
 
-	ExAcquireResourceExclusiveLite(&ccb->Resource, TRUE);
-	if (NT_SUCCESS(status)) {
-		ccb->Flags |= DOKAN_FILE_OPENED;
-	}
-	ExReleaseResourceLite(&ccb->Resource);
+		ExAcquireResourceExclusiveLite(&fcb->Resource, TRUE);
+		if (NT_SUCCESS(status) &&
+			(irpSp->Parameters.Create.Options & FILE_DIRECTORY_FILE ||
+			EventInfo->Create.Flags & DOKAN_FILE_DIRECTORY)) {
+			if (irpSp->Parameters.Create.Options & FILE_DIRECTORY_FILE) {
+				DDbgPrint("  FILE_DIRECTORY_FILE %p\n", fcb);
+			}
+			else {
+				DDbgPrint("  DOKAN_FILE_DIRECTORY %p\n", fcb);
+			}
+			fcb->Flags |= DOKAN_FILE_DIRECTORY;
+		}
+		ExReleaseResourceLite(&fcb->Resource);
 
-	if (NT_SUCCESS(status)) {
-		if (info == FILE_CREATED) {
-			if (fcb->Flags & DOKAN_FILE_DIRECTORY) {
-				DokanNotifyReportChange(fcb, FILE_NOTIFY_CHANGE_DIR_NAME, FILE_ACTION_ADDED);
-			} else {
-				DokanNotifyReportChange(fcb, FILE_NOTIFY_CHANGE_FILE_NAME, FILE_ACTION_ADDED);
+		ExAcquireResourceExclusiveLite(&ccb->Resource, TRUE);
+		if (NT_SUCCESS(status)) {
+			ccb->Flags |= DOKAN_FILE_OPENED;
+		}
+		ExReleaseResourceLite(&ccb->Resource);
+
+		if (NT_SUCCESS(status)) {
+			if (info == FILE_CREATED) {
+				if (fcb->Flags & DOKAN_FILE_DIRECTORY) {
+					DokanNotifyReportChange(fcb, FILE_NOTIFY_CHANGE_DIR_NAME, FILE_ACTION_ADDED);
+				}
+				else {
+					DokanNotifyReportChange(fcb, FILE_NOTIFY_CHANGE_FILE_NAME, FILE_ACTION_ADDED);
+				}
 			}
 		}
-	} else {
-		DDbgPrint("   IRP_MJ_CREATE failed. Free CCB:%p\n", ccb);
-		DokanFreeCCB(ccb);
-		DokanFreeFCB(fcb);
+		else {
+			DDbgPrint("   IRP_MJ_CREATE failed. Free CCB:%p\n", ccb);
+			DokanFreeCCB(ccb);
+			DokanFreeFCB(fcb);
+		}
 	}
 	
 	irp->IoStatus.Status = status;

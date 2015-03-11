@@ -50,28 +50,14 @@ DokanDispatchWrite(
 		irpSp		= IoGetCurrentIrpStackLocation(Irp);
 		fileObject	= irpSp->FileObject;
 
-		if (fileObject == NULL) {
-			DDbgPrint("  fileObject == NULL\n");
-			status = STATUS_INVALID_PARAMETER;
-			__leave;
-		}
-
-		vcb = DeviceObject->DeviceExtension;
-
-		if (GetIdentifierType(vcb) != VCB ||
-			!DokanCheckCCB(vcb->Dcb, fileObject->FsContext2)) {
+		if (!DokanGetDispatchParameters(DeviceObject, fileObject, &vcb, &ccb, &fcb))
+		{
 			status = STATUS_INVALID_PARAMETER;
 			__leave;
 		}
 
 		DDbgPrint("  ProcessId %lu\n", IoGetRequestorProcessId(Irp));
 		DokanPrintFileName(fileObject);
-
-		ccb			= fileObject->FsContext2;
-		ASSERT(ccb != NULL);
-
-		fcb			= ccb->Fcb;
-		ASSERT(fcb != NULL);
 
 		if (fcb->Flags & DOKAN_FILE_DIRECTORY) {
 			status = STATUS_INVALID_PARAMETER;
@@ -247,36 +233,38 @@ DokanCompleteWrite(
 	PDokanCCB			ccb;
 	PFILE_OBJECT		fileObject;
 
+	irp = IrpEntry->Irp;
+	irpSp = IrpEntry->IrpSp;
+
 	fileObject = IrpEntry->FileObject;
-	ASSERT(fileObject != NULL);
 
-	DDbgPrint("==> DokanCompleteWrite %wZ\n", &fileObject->FileName);
+	if (!DokanGetDispatchContext(fileObject, &ccb, NULL))
+	{
+		status = STATUS_INVALID_PARAMETER;
+	}
+	else
+	{
+		DDbgPrint("==> DokanCompleteWrite %wZ\n", &fileObject->FileName);
 
-	irp   = IrpEntry->Irp;
-	irpSp = IrpEntry->IrpSp;	
+		ccb->UserContext = EventInfo->Context;
+		//DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
 
-	ccb = fileObject->FsContext2;
-	ASSERT(ccb != NULL);
+		status = EventInfo->Status;
 
-	ccb->UserContext = EventInfo->Context;
-	//DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
-
-	status = EventInfo->Status;
+		if (NT_SUCCESS(status) &&
+			EventInfo->BufferLength != 0 &&
+			fileObject->Flags & FO_SYNCHRONOUS_IO &&
+			!(irp->Flags & IRP_PAGING_IO)) {
+			// update current byte offset only when synchronous IO and not paging IO
+			fileObject->CurrentByteOffset.QuadPart =
+				EventInfo->Write.CurrentByteOffset.QuadPart;
+			DDbgPrint("  Updated CurrentByteOffset %I64d\n",
+				fileObject->CurrentByteOffset.QuadPart);
+		}
+	}
 
 	irp->IoStatus.Status = status;
 	irp->IoStatus.Information = EventInfo->BufferLength;
-
-	if (NT_SUCCESS(status) &&
-		EventInfo->BufferLength != 0 &&
-		fileObject->Flags & FO_SYNCHRONOUS_IO &&
-		!(irp->Flags & IRP_PAGING_IO)) {
-		// update current byte offset only when synchronous IO and not paging IO
-		fileObject->CurrentByteOffset.QuadPart =
-			EventInfo->Write.CurrentByteOffset.QuadPart;
-		DDbgPrint("  Updated CurrentByteOffset %I64d\n",
-			fileObject->CurrentByteOffset.QuadPart);
-	}
-
 	IoCompleteRequest(irp, IO_NO_INCREMENT);
 
 	DokanPrintNTStatus(status);

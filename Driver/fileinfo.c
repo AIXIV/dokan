@@ -55,33 +55,12 @@ DokanDispatchQueryInformation(
 		DDbgPrint("  FileInfoClass %d\n", irpSp->Parameters.QueryFile.FileInformationClass);
 		DDbgPrint("  ProcessId %lu\n", IoGetRequestorProcessId(Irp));
 
-		if (fileObject == NULL) {
-			DDbgPrint("  fileObject == NULL\n");
+		if (!DokanGetDispatchParameters(DeviceObject, fileObject, &vcb, &ccb, &fcb))
+		{
 			status = STATUS_INVALID_PARAMETER;
 			__leave;
 		}
-
 		DokanPrintFileName(fileObject);
-
-		/*
-		if (fileObject->FsContext2 == NULL &&
-			fileObject->FileName.Length == 0) {
-			// volume open?
-			status = STATUS_SUCCESS;
-			__leave;
-		}*/
-		vcb = DeviceObject->DeviceExtension;
-		if (GetIdentifierType(vcb) != VCB ||
-			!DokanCheckCCB(vcb->Dcb, fileObject->FsContext2)) {
-			status = STATUS_INVALID_PARAMETER;
-			__leave;
-		}
-
-		ccb = (PDokanCCB)fileObject->FsContext2;
-		ASSERT(ccb != NULL);
-
-		fcb = ccb->Fcb;
-		ASSERT(fcb != NULL);
 
 		switch (irpSp->Parameters.QueryFile.FileInformationClass) {
 		case FileBasicInformation:
@@ -240,46 +219,50 @@ DokanCompleteQueryInformation(
 	irp = IrpEntry->Irp;
 	irpSp = IrpEntry->IrpSp;
 
-	ccb = IrpEntry->FileObject->FsContext2;
+	if (!DokanGetDispatchContext(IrpEntry->FileObject, &ccb, NULL))
+	{
+		status = STATUS_INVALID_PARAMETER;
+	}
+	else
+	{
 
-	ASSERT(ccb != NULL);
+		ccb->UserContext = EventInfo->Context;
+		//DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
 
-	ccb->UserContext = EventInfo->Context;
-	//DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
+		// where we shold copy FileInfo to
+		buffer = irp->AssociatedIrp.SystemBuffer;
 
-	// where we shold copy FileInfo to
-	buffer = irp->AssociatedIrp.SystemBuffer;
+		// available buffer size
+		bufferLen = irpSp->Parameters.QueryFile.Length;
 
-	// available buffer size
-	bufferLen = irpSp->Parameters.QueryFile.Length;
+		// buffer is not specifed or short of size
+		if (bufferLen == 0 || buffer == NULL || bufferLen < EventInfo->BufferLength) {
+			info = 0;
+			status = STATUS_INSUFFICIENT_RESOURCES;
 
-	// buffer is not specifed or short of size
-	if (bufferLen == 0 || buffer == NULL || bufferLen < EventInfo->BufferLength) {
-		info   = 0;
-		status = STATUS_INSUFFICIENT_RESOURCES;
+		}
+		else {
 
-	} else {
+			//
+			// we write FileInfo from user mode
+			//
+			ASSERT(buffer != NULL);
 
-		//
-		// we write FileInfo from user mode
-		//
-		ASSERT(buffer != NULL);
-		
-		RtlZeroMemory(buffer, bufferLen);
-		RtlCopyMemory(buffer, EventInfo->Buffer, EventInfo->BufferLength);
+			RtlZeroMemory(buffer, bufferLen);
+			RtlCopyMemory(buffer, EventInfo->Buffer, EventInfo->BufferLength);
 
-		// written bytes
-		info = EventInfo->BufferLength;
-		status = EventInfo->Status;
+			// written bytes
+			info = EventInfo->BufferLength;
+			status = EventInfo->Status;
 
-		if (NT_SUCCESS(status)
-			&& irpSp->Parameters.QueryFile.FileInformationClass == FileAllInformation) {
+			if (NT_SUCCESS(status)
+				&& irpSp->Parameters.QueryFile.FileInformationClass == FileAllInformation) {
 
-			PFILE_ALL_INFORMATION allInfo = (PFILE_ALL_INFORMATION)buffer;
-			allInfo->PositionInformation.CurrentByteOffset = IrpEntry->FileObject->CurrentByteOffset;
+				PFILE_ALL_INFORMATION allInfo = (PFILE_ALL_INFORMATION)buffer;
+				allInfo->PositionInformation.CurrentByteOffset = IrpEntry->FileObject->CurrentByteOffset;
+			}
 		}
 	}
-
 
 	irp->IoStatus.Status = status;
 	irp->IoStatus.Information = info;
@@ -323,25 +306,12 @@ DokanDispatchSetInformation(
 
 		irpSp			= IoGetCurrentIrpStackLocation(Irp);
 		fileObject		= irpSp->FileObject;
-		
-		if (fileObject == NULL) {
-			DDbgPrint("  fileObject == NULL\n");
-			status = STATUS_INVALID_PARAMETER;
-			__leave;
-		}
-		
-		vcb = DeviceObject->DeviceExtension;
-		if (GetIdentifierType(vcb) != VCB ||
-			!DokanCheckCCB(vcb->Dcb, fileObject->FsContext2)) {
-			status = STATUS_INVALID_PARAMETER;
-			__leave;
-		}
-		
-		ccb	= (PDokanCCB)fileObject->FsContext2;
-		ASSERT(ccb != NULL);
 
-		fcb = ccb->Fcb;
-		ASSERT(fcb != NULL);
+		if (!DokanGetDispatchParameters(DeviceObject, fileObject, &vcb, &ccb, &fcb))
+		{
+			status = STATUS_INVALID_PARAMETER;
+			__leave;
+		}
 
 		DDbgPrint("  ProcessId %lu\n", IoGetRequestorProcessId(Irp));
 		DokanPrintFileName(fileObject);
@@ -514,13 +484,13 @@ DokanCompleteSetInformation(
 
 	__try {
 
-		ccb = IrpEntry->FileObject->FsContext2;
-		ASSERT(ccb != NULL);
+		if (!DokanGetDispatchContext(IrpEntry->FileObject, &ccb, &fcb))
+		{
+			status = STATUS_INVALID_PARAMETER;
+			__leave;
+		}
 
 		ExAcquireResourceExclusiveLite(&ccb->Resource, TRUE);
-
-		fcb = ccb->Fcb;
-		ASSERT(fcb != NULL);
 
 		ccb->UserContext = EventInfo->Context;
 

@@ -47,15 +47,8 @@ DokanDispatchLock(
 		irpSp = IoGetCurrentIrpStackLocation(Irp);
 		fileObject = irpSp->FileObject;
 
-		if (fileObject == NULL) {
-			DDbgPrint("  fileObject == NULL\n");
-			status = STATUS_INVALID_PARAMETER;
-			__leave;
-		}
-
-		vcb = DeviceObject->DeviceExtension;
-		if (GetIdentifierType(vcb) != VCB ||
-			!DokanCheckCCB(vcb->Dcb, fileObject->FsContext2)) {
+		if (!DokanGetDispatchParameters(DeviceObject, fileObject, &vcb, &ccb, &fcb))
+		{
 			status = STATUS_INVALID_PARAMETER;
 			__leave;
 		}
@@ -80,12 +73,6 @@ DokanDispatchLock(
 			DDbgPrint("  unknown function : %d\n", irpSp->MinorFunction);
 			break;
 		}
-
-		ccb = fileObject->FsContext2;
-		ASSERT(ccb != NULL);
-
-		fcb = ccb->Fcb;
-		ASSERT(fcb != NULL);
 
 		eventLength = sizeof(EVENT_CONTEXT) + fcb->FileName.Length;
 		eventContext = AllocateEventContext(vcb->Dcb, Irp, eventLength, ccb);
@@ -154,13 +141,18 @@ DokanCompleteLock(
 	DDbgPrint("==> DokanCompleteLock\n");
 
 	fileObject = irpSp->FileObject;
-	ccb = fileObject->FsContext2;
-	ASSERT(ccb != NULL);
 
-	ccb->UserContext = EventInfo->Context;
-	// DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
+	if (!DokanGetDispatchContext(fileObject, &ccb, NULL))
+	{
+		status = STATUS_INVALID_PARAMETER;
+	}
+	else
+	{
+		ccb->UserContext = EventInfo->Context;
+		// DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
+		status = EventInfo->Status;
+	}
 
-	status = EventInfo->Status;
 	irp->IoStatus.Status = status;
 	irp->IoStatus.Information = 0;
 	IoCompleteRequest(irp, IO_NO_INCREMENT);

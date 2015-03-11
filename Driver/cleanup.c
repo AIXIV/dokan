@@ -71,7 +71,7 @@ Return Value:
 
 		if (!DokanGetDispatchParameters(DeviceObject, fileObject, &vcb, &ccb, &fcb))
 		{
-			status = STATUS_SUCCESS;
+			status = STATUS_SUCCESS; // TODO: really? why not report failure if failure it is?
 			__leave;
 		}
 
@@ -137,29 +137,29 @@ DokanCompleteCleanup(
 
 	DDbgPrint("==> DokanCompleteCleanup\n");
 
-	irp   = IrpEntry->Irp;
+	irp = IrpEntry->Irp;
 	irpSp = IrpEntry->IrpSp;
 
 	fileObject = IrpEntry->FileObject;
-	ASSERT(fileObject != NULL);
 
-	ccb	= fileObject->FsContext2;
-	ASSERT(ccb != NULL);
-
-	ccb->UserContext = EventInfo->Context;
-	//DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
-
-	fcb = ccb->Fcb;
-	ASSERT(fcb != NULL);
-
-	vcb = fcb->Vcb;
-
-	status = EventInfo->Status;
-
-	if (fcb->Flags & DOKAN_FILE_DIRECTORY) {
-		FsRtlNotifyCleanup(vcb->NotifySync, &vcb->DirNotifyList, ccb);
+	if (!DokanGetDispatchContext(fileObject, &ccb, &fcb))
+	{
+		status = STATUS_INVALID_PARAMETER;
 	}
+	else
+	{
+		ccb->UserContext = EventInfo->Context;
+		//DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
 
+		vcb = fcb->Vcb;
+
+		status = EventInfo->Status;
+
+		if (fcb->Flags & DOKAN_FILE_DIRECTORY) {
+			FsRtlNotifyCleanup(vcb->NotifySync, &vcb->DirNotifyList, ccb);
+		}
+	}
+	
 	irp->IoStatus.Status = status;
 	irp->IoStatus.Information = 0;
 	IoCompleteRequest(irp, IO_NO_INCREMENT);

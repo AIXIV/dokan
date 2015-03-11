@@ -91,17 +91,23 @@ Return Value:
 				DokanFreeCCB(ccb);
 
 				ASSERT(fcb != NULL);
-				DokanFreeFCB(fcb);
+				if (fcb != NULL)
+				{
+					DokanFreeFCB(fcb);
+				}
 			}
 
-			status = STATUS_SUCCESS;
+			status = STATUS_SUCCESS; // TODO: is this success?
 			__leave;
 		}
 
-		ASSERT(ccb != NULL);
-
+		ASSERT(ccb != NULL); // will never occur since here DokanCheckCCB() was true and thus ccb != NULL. this statement calms SAL however
 		fcb = ccb->Fcb;
-		ASSERT(fcb != NULL);
+		if (fcb == NULL)
+		{
+			status = STATUS_SUCCESS; // TODO: is this success?
+			__leave;
+		}
 
 		eventLength = sizeof(EVENT_CONTEXT) + fcb->FileName.Length;
 		eventContext = AllocateEventContext(vcb->Dcb, Irp, eventLength, ccb);
@@ -112,7 +118,7 @@ Return Value:
 			DDbgPrint("   Free CCB:%p\n", ccb);
 			DokanFreeCCB(ccb);
 			DokanFreeFCB(fcb);
-			status = STATUS_SUCCESS;
+			status = STATUS_SUCCESS; // TODO: is this success?
 			__leave;
 		}
 

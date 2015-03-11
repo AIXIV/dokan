@@ -51,30 +51,16 @@ DokanDispatchQuerySecurity(
 		irpSp = IoGetCurrentIrpStackLocation(Irp);
 		fileObject = irpSp->FileObject;
 
-		if (fileObject == NULL) {
-			DDbgPrint("  fileObject == NULL\n");
+		if (!DokanGetDispatchParameters(DeviceObject, fileObject, &vcb, &ccb, &fcb))
+		{
 			status = STATUS_INVALID_PARAMETER;
 			__leave;
 		}
 
-		vcb = DeviceObject->DeviceExtension;
-		if (GetIdentifierType(vcb) != VCB) {
-			DbgPrint("    DeviceExtension != VCB\n");
-			status = STATUS_INVALID_PARAMETER;
-			__leave;
-		}
 		dcb = vcb->Dcb;
 
 		DDbgPrint("  ProcessId %lu\n", IoGetRequestorProcessId(Irp));
 		DokanPrintFileName(fileObject);
-
-		ccb = fileObject->FsContext2;
-		if (ccb == NULL) {
-			DDbgPrint("    ccb == NULL\n");
-			status = STATUS_INVALID_PARAMETER;
-			__leave;
-		}
-		fcb = ccb->Fcb;
 
 		bufferLength = irpSp->Parameters.QuerySecurity.Length;
 		securityInfo = &irpSp->Parameters.QuerySecurity.SecurityInformation;
@@ -191,13 +177,10 @@ DokanCompleteQuerySecurity(
 	}
 
 	fileObject = IrpEntry->FileObject;
-	ASSERT(fileObject != NULL);
 
-	ccb = fileObject->FsContext2;
-	if (ccb != NULL) {
-		ccb->UserContext = EventInfo->Context;
-	} else {
-		DDbgPrint("  ccb == NULL\n");
+	if (DokanGetDispatchContext(fileObject, &ccb, NULL))
+	{
+		ccb->UserContext = EventInfo->Context; // ccb == NULL is invalid parameter?
 	}
 
 	irp->IoStatus.Status = status;
@@ -239,38 +222,16 @@ DokanDispatchSetSecurity(
 		irpSp = IoGetCurrentIrpStackLocation(Irp);
 		fileObject = irpSp->FileObject;
 
-		if (fileObject == NULL) {
-			DDbgPrint("  fileObject == NULL\n");
+		if (!DokanGetDispatchParameters(DeviceObject, fileObject, &vcb, &ccb, &fcb))
+		{
 			status = STATUS_INVALID_PARAMETER;
 			__leave;
 		}
 
-		vcb = DeviceObject->DeviceExtension;
-		if (GetIdentifierType(vcb) != VCB ||
-			!DokanCheckCCB(vcb->Dcb, fileObject->FsContext2)) {
-			status = STATUS_INVALID_PARAMETER;
-			__leave;
-		}
 		dcb = vcb->Dcb;
 
 		DDbgPrint("  ProcessId %lu\n", IoGetRequestorProcessId(Irp));
 		DokanPrintFileName(fileObject);
-		ccb = fileObject->FsContext2;
-		if (ccb == NULL) {
-			DDbgPrint("    ccb == NULL\n");
-			status = STATUS_INVALID_PARAMETER;
-			__leave;
-		}
-		ASSERT(ccb != NULL);
-
-		fcb = ccb->Fcb;
-		if (fcb == NULL)
-		{
-			DDbgPrint("fcb == NULL");
-			status = STATUS_INVALID_PARAMETER;
-			__leave;
-		}
-		ASSERT(fcb != NULL);
 
 		securityInfo = &irpSp->Parameters.SetSecurity.SecurityInformation;
 
@@ -360,13 +321,10 @@ DokanCompleteSetSecurity(
 	irpSp = IrpEntry->IrpSp;	
 
 	fileObject = IrpEntry->FileObject;
-	ASSERT(fileObject != NULL);
 
-	ccb = fileObject->FsContext2;
-	if (ccb != NULL) {
-		ccb->UserContext = EventInfo->Context;
-	} else {
-		DDbgPrint("  ccb == NULL\n");
+	if (DokanGetDispatchContext(fileObject, &ccb, NULL))
+	{
+		ccb->UserContext = EventInfo->Context; // ccb == NULL is invalid parameter?
 	}
 
 	status = EventInfo->Status;

@@ -31,7 +31,6 @@ DokanNotifyChangeDirectory(
 	_In_ PDEVICE_OBJECT DeviceObject,
 	_In_ PIRP			Irp);
 
-
 #pragma alloc_text("PAGED_CODE", DokanDispatchDirectoryControl)
 NTSTATUS
 DokanDispatchDirectoryControl(
@@ -42,8 +41,6 @@ DokanDispatchDirectoryControl(
 	NTSTATUS			status		= STATUS_NOT_IMPLEMENTED;
 	PFILE_OBJECT		fileObject;
 	PIO_STACK_LOCATION	irpSp;
-	PDokanCCB			ccb;
-	PDokanVCB			vcb;
 
 	PAGED_CODE();
 
@@ -55,15 +52,8 @@ DokanDispatchDirectoryControl(
 		irpSp		= IoGetCurrentIrpStackLocation(Irp);
 		fileObject	= irpSp->FileObject;
 
-		if (fileObject == NULL) {
-			DDbgPrint("   fileObject is NULL\n");
-			status = STATUS_INVALID_PARAMETER;
-			__leave;
-		}
-
-		vcb = DeviceObject->DeviceExtension;
-		if (GetIdentifierType(vcb) != VCB ||
-			!DokanCheckCCB(vcb->Dcb, fileObject->FsContext2)) {
+		if (fileObject == NULL)
+		{
 			status = STATUS_INVALID_PARAMETER;
 			__leave;
 		}
@@ -73,7 +63,6 @@ DokanDispatchDirectoryControl(
 
 		if (irpSp->MinorFunction == IRP_MN_QUERY_DIRECTORY) {
 			status = DokanQueryDirectory(DeviceObject, Irp);
-	
 		} else if( irpSp->MinorFunction == IRP_MN_NOTIFY_CHANGE_DIRECTORY) {
 			status = DokanNotifyChangeDirectory(DeviceObject, Irp);
 		} else {
@@ -120,19 +109,10 @@ DokanQueryDirectory(
 	irpSp		= IoGetCurrentIrpStackLocation(Irp);
 	fileObject	= irpSp->FileObject;
 
-	vcb = DeviceObject->DeviceExtension;
-	if (GetIdentifierType(vcb) != VCB) {
+	if (!DokanGetDispatchParameters(DeviceObject, fileObject, &vcb, &ccb, &fcb))
+	{
 		return STATUS_INVALID_PARAMETER;
 	}
-
-	ccb = fileObject->FsContext2;
-	if (ccb == NULL) {
-		return STATUS_INVALID_PARAMETER;
-	}
-	ASSERT(ccb != NULL);
-
-	fcb = ccb->Fcb;
-	ASSERT(fcb != NULL);
 
 	if (irpSp->Flags & SL_INDEX_SPECIFIED) {
 		DDbgPrint("  index specified %d\n", irpSp->Parameters.QueryDirectory.FileIndex);
@@ -285,27 +265,21 @@ DokanNotifyChangeDirectory(
 	_In_ PDEVICE_OBJECT DeviceObject,
 	_In_ PIRP			Irp)
 {
+	PIO_STACK_LOCATION	irpSp;
+	PFILE_OBJECT		fileObject;
+	PDokanVCB			vcb;
 	PDokanCCB			ccb;
 	PDokanFCB			fcb;
-	PFILE_OBJECT		fileObject;
-	PIO_STACK_LOCATION	irpSp;
-	PDokanVCB			vcb;
 
 	DDbgPrint("\tNotifyChangeDirectory\n");
 
 	irpSp		= IoGetCurrentIrpStackLocation(Irp);
 	fileObject	= irpSp->FileObject;
 
-	vcb = DeviceObject->DeviceExtension;
-	if (GetIdentifierType(vcb) != VCB) {
+	if (!DokanGetDispatchParameters(DeviceObject, fileObject, &vcb, &ccb, &fcb))
+	{
 		return STATUS_INVALID_PARAMETER;
 	}
-	
-	ccb = fileObject->FsContext2;
-	ASSERT(ccb != NULL);
-
-	fcb = ccb->Fcb;
-	ASSERT(fcb != NULL);
 
 	if (!(fcb->Flags & DOKAN_FILE_DIRECTORY)) {
 		return STATUS_INVALID_PARAMETER;
@@ -372,35 +346,41 @@ DokanCompleteDirectoryControl(
 	} else {
 
 		PDokanCCB ccb	= IrpEntry->FileObject->FsContext2;
-		ULONG	 orgLen = irpSp->Parameters.QueryDirectory.Length;
 
-		//
-		// set the information recieved from user mode
-		//
-		ASSERT(buffer != NULL);
-		
-		RtlZeroMemory(buffer, bufferLen);
-		
-		//DDbgPrint("   copy DirectoryInfo\n");
-		RtlCopyMemory(buffer, EventInfo->Buffer, EventInfo->BufferLength);
+		if (!DokanGetDispatchContext(IrpEntry->FileObject, &ccb, NULL))
+		{
+			status = STATUS_INVALID_PARAMETER;
+		}
+		else
+		{
+			ULONG	 orgLen = irpSp->Parameters.QueryDirectory.Length;
 
-		DDbgPrint("    eventInfo->Directory.Index = %d\n", EventInfo->Directory.Index);
-		DDbgPrint("    eventInfo->BufferLength    = %d\n", EventInfo->BufferLength);
-		DDbgPrint("    eventInfo->Status = %x (%d)\n",	  EventInfo->Status, EventInfo->Status);
+			//
+			// set the information recieved from user mode
+			//
+			RtlZeroMemory(buffer, bufferLen);
 
-		// update index which specified n-th directory entry is returned
-		// this should be locked before writing?
-		ccb->Context = EventInfo->Directory.Index;
+			//DDbgPrint("   copy DirectoryInfo\n");
+			RtlCopyMemory(buffer, EventInfo->Buffer, EventInfo->BufferLength);
 
-		ccb->UserContext = EventInfo->Context;
-		//DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
+			DDbgPrint("    eventInfo->Directory.Index = %d\n", EventInfo->Directory.Index);
+			DDbgPrint("    eventInfo->BufferLength    = %d\n", EventInfo->BufferLength);
+			DDbgPrint("    eventInfo->Status = %x (%d)\n", EventInfo->Status, EventInfo->Status);
 
-		// written bytes
-		//irpSp->Parameters.QueryDirectory.Length = EventInfo->BufferLength;
+			// update index which specified n-th directory entry is returned
+			// this should be locked before writing?
+			ccb->Context = EventInfo->Directory.Index;
 
-		status = EventInfo->Status;
-		
-		info = EventInfo->BufferLength;
+			ccb->UserContext = EventInfo->Context;
+			//DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
+
+			// written bytes
+			//irpSp->Parameters.QueryDirectory.Length = EventInfo->BufferLength;
+
+			status = EventInfo->Status;
+
+			info = EventInfo->BufferLength;
+		}
 	}
 
 

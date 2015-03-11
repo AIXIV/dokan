@@ -531,7 +531,6 @@ DokanCheckCCB(
 	_In_ PDokanDCB	Dcb,
 	_In_opt_ PDokanCCB	Ccb)
 {
-	ASSERT(Dcb != NULL);
 	if (GetIdentifierType(Dcb) != DCB) {
 		PrintIdType(Dcb);
 		return FALSE;
@@ -557,20 +556,20 @@ DokanCheckCCB(
 }
 
 _Success_(return)
-BOOLEAN DokanGetDispatchParameters(
-	_In_ PDEVICE_OBJECT DeviceObject,
+BOOLEAN DokanGetDispatchContext(
 	_In_opt_ PFILE_OBJECT FileObject,
-	_Outptr_result_nullonfailure_ PDokanVCB *Vcb,
 	_Outptr_result_nullonfailure_ PDokanCCB *Ccb,
-	_Outptr_result_nullonfailure_ PDokanFCB *Fcb
-	)
+	_Outptr_opt_result_nullonfailure_ PDokanFCB *Fcb
+)
 {
-	PDokanVCB vcb = NULL;
 	PDokanCCB ccb = NULL;
 	PDokanFCB fcb = NULL;
-	*Vcb = vcb;
 	*Ccb = ccb;
-	*Fcb = fcb;
+	if (Fcb != NULL)
+	{
+
+		*Fcb = fcb;
+	}
 
 	if (FileObject == NULL)
 	{
@@ -578,29 +577,74 @@ BOOLEAN DokanGetDispatchParameters(
 		return FALSE;
 	}
 
-	vcb = DeviceObject->DeviceExtension;
-	if (GetIdentifierType(vcb) != VCB)
-	{
-		DDbgPrint("  Invalid VCB\n");
-		return FALSE;
-	}
-
 	ccb = FileObject->FsContext2;
-	if (!DokanCheckCCB((vcb)->Dcb, ccb) || GetIdentifierType(ccb) != CCB)
+	if (ccb == NULL || GetIdentifierType(ccb) != CCB)
 	{
 		DDbgPrint("  Invalid CCB\n");
 		return FALSE;
 	}
 
-	fcb = ccb->Fcb;
-	if (fcb == NULL || GetIdentifierType(fcb) != FCB)
+	if (Fcb != NULL)
 	{
-		DDbgPrint("  Invalid FCB\n");
-		return FALSE;
+		fcb = ccb->Fcb;
+		if (fcb == NULL || GetIdentifierType(fcb) != FCB)
+		{
+			DDbgPrint("  Invalid FCB\n");
+			return FALSE;
+		}
+		*Fcb = fcb;
 	}
+	*Ccb = ccb;
+
+	return TRUE;
+}
+
+_Success_(return)
+BOOLEAN DokanGetDispatchParameters(
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_In_opt_ PFILE_OBJECT FileObject,
+	_Outptr_result_nullonfailure_ PDokanVCB *Vcb,
+	_Outptr_result_nullonfailure_ PDokanCCB *Ccb,
+	_Outptr_opt_result_nullonfailure_ PDokanFCB *Fcb
+)
+{
+	PDokanVCB vcb = NULL;
+	PDokanCCB ccb = NULL;
+	PDokanFCB fcb = NULL;
 	*Vcb = vcb;
 	*Ccb = ccb;
-	*Fcb = fcb;
+	if (Fcb != NULL)
+	{
+		*Fcb = fcb;
+		if (!DokanGetDispatchContext(FileObject, &ccb, &fcb))
+		{
+			return FALSE;
+		}
+	}
+	else if (!DokanGetDispatchContext(FileObject, &ccb, NULL))
+	{
+		return FALSE;
+	}
+
+	vcb = DeviceObject->DeviceExtension;
+	if (vcb == NULL || GetIdentifierType(vcb) != VCB)
+	{
+		DDbgPrint("  Invalid VCB\n");
+		return FALSE;
+	}
+
+	if (!DokanCheckCCB(vcb->Dcb, ccb))
+	{
+		DDbgPrint("  Invalid CCB\n");
+		return FALSE;
+	}
+
+	*Vcb = vcb;
+	*Ccb = ccb;
+	if (Fcb != NULL)
+	{
+		*Fcb = fcb;
+	}
 
 	return TRUE;
 }

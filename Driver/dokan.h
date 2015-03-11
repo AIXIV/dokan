@@ -541,12 +541,19 @@ DokanCheckCCB(
 	_In_opt_ PDokanCCB	Ccb);
 
 _Success_(return)
+BOOLEAN DokanGetDispatchContext(
+	_In_opt_ PFILE_OBJECT FileObject,
+	_Outptr_result_nullonfailure_ PDokanCCB *Ccb,
+	_Outptr_opt_result_nullonfailure_ PDokanFCB *Fcb
+);
+
+_Success_(return)
 BOOLEAN DokanGetDispatchParameters(
 	_In_ PDEVICE_OBJECT DeviceObject,
 	_In_opt_ PFILE_OBJECT FileObject,
 	_Outptr_result_nullonfailure_ PDokanVCB *Vcb,
 	_Outptr_result_nullonfailure_ PDokanCCB *Ccb,
-	_Outptr_result_nullonfailure_ PDokanFCB *Fcb
+	_Outptr_opt_result_nullonfailure_ PDokanFCB *Fcb
 );
 
 VOID
