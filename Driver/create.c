@@ -529,6 +529,12 @@ Return Value:
 		fileObject->SectionObjectPointer = &fcb->SectionObjectPointers;
 		//fileObject->Flags |= FILE_NO_INTERMEDIATE_BUFFERING;
 
+		if (irpSp->Parameters.Create.Options & FILE_DELETE_ON_CLOSE)
+		{
+			fcb->Flags |= DOKAN_DELETE_ON_CLOSE;
+			ccb->Flags |= DOKAN_DELETE_ON_CLOSE;
+		}
+
 		eventLength = sizeof(EVENT_CONTEXT) + fcb->FileName.Length;
 		eventContext = AllocateEventContext(vcb->Dcb, Irp, eventLength, ccb);
 				
