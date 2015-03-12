@@ -292,7 +292,7 @@ DokanCreateGlobalDiskDevice(
 				DriverObject,		// DriverObject
 				sizeof(DOKAN_GLOBAL),// DeviceExtensionSize
 				&deviceName,		// DeviceName
-				FILE_DEVICE_UNKNOWN,// DeviceType
+				DOKAN_GLOBAL_DEVICE_TYPE,// DeviceType
 				0,					// DeviceCharacteristics
 				FALSE,				// Not Exclusive
 				&SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RW_RES_R, // Default SDDL String
