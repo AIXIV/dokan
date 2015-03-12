@@ -24,8 +24,8 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 VOID
 DokanIrpCancelRoutine(
-    __in PDEVICE_OBJECT   DeviceObject,
-    __in PIRP             Irp
+    _Inout_	PDEVICE_OBJECT			DeviceObject,
+	_Inout_ _IRQL_uses_cancel_ PIRP	Irp
     )
 {
     KIRQL               oldIrql;
@@ -82,9 +82,9 @@ DokanIrpCancelRoutine(
 		Irp->Tail.Overlay.DriverContext[DRIVER_CONTEXT_IRP_ENTRY] = NULL; 
 
 		KeReleaseSpinLock(lock, oldIrql);
-	}
 
-	DDbgPrint("   canceled IRP #%X\n", serialNumber);
+		DDbgPrint("   canceled IRP #%X\n", serialNumber);
+	}
     Irp->IoStatus.Status = STATUS_CANCELLED;
     Irp->IoStatus.Information = 0;
     IoCompleteRequest(Irp, IO_NO_INCREMENT);
@@ -97,12 +97,12 @@ DokanIrpCancelRoutine(
 
 NTSTATUS
 RegisterPendingIrpMain(
-    __in PDEVICE_OBJECT DeviceObject,
-    __in PIRP			Irp,
-	__in ULONG			SerialNumber,
-	__in PIRP_LIST		IrpList,
-	__in ULONG			Flags,
-	__in ULONG			CheckMount
+    _In_ PDEVICE_OBJECT DeviceObject,
+    _In_ PIRP			Irp,
+	_In_ ULONG			SerialNumber,
+	_In_ PIRP_LIST		IrpList,
+	_In_ ULONG			Flags,
+	_In_ ULONG			CheckMount
     )
 {
  	PIRP_ENTRY			irpEntry;
@@ -181,10 +181,10 @@ RegisterPendingIrpMain(
 
 NTSTATUS
 DokanRegisterPendingIrp(
-    __in PDEVICE_OBJECT DeviceObject,
-    __in PIRP			Irp,
-	__in PEVENT_CONTEXT	EventContext,
-	__in ULONG			Flags
+    _In_ PDEVICE_OBJECT DeviceObject,
+    _In_ PIRP			Irp,
+	_In_ PEVENT_CONTEXT	EventContext,
+	_In_ ULONG			Flags
     )
 {
 	PDokanVCB vcb = DeviceObject->DeviceExtension;
@@ -215,8 +215,8 @@ DokanRegisterPendingIrp(
 
 NTSTATUS
 DokanRegisterPendingIrpForEvent(
-    __in PDEVICE_OBJECT DeviceObject,
-    __in PIRP			Irp
+    _In_ PDEVICE_OBJECT DeviceObject,
+    _Inout_ PIRP		Irp
     )
 {
 	PDokanVCB vcb = DeviceObject->DeviceExtension;
@@ -241,8 +241,8 @@ DokanRegisterPendingIrpForEvent(
 
 NTSTATUS
 DokanRegisterPendingIrpForService(
-	__in PDEVICE_OBJECT	DeviceObject,
-	__in PIRP			Irp
+	_In_ PDEVICE_OBJECT	DeviceObject,
+	_Inout_ PIRP		Irp
 	)
 {
 	PDOKAN_GLOBAL dokanGlobal;
@@ -267,8 +267,8 @@ DokanRegisterPendingIrpForService(
 // search corresponding pending IRP and complete it
 NTSTATUS
 DokanCompleteIrp(
-    __in PDEVICE_OBJECT DeviceObject,
-    __in PIRP Irp
+    _In_ PDEVICE_OBJECT DeviceObject,
+    _Inout_ PIRP Irp
 	)
 {
 	KIRQL				oldIrql;
@@ -402,8 +402,8 @@ DokanCompleteIrp(
 // start event dispatching
 NTSTATUS
 DokanEventStart(
-    __in PDEVICE_OBJECT DeviceObject,
-    __in PIRP Irp
+    _In_ PDEVICE_OBJECT DeviceObject,
+    _Inout_ PIRP Irp
    )
 {
 	ULONG				outBufferLen;
@@ -553,8 +553,8 @@ DokanEventStart(
 // user assinged bigger buffer that is enough to return WriteEventContext
 NTSTATUS
 DokanEventWrite(
-    __in PDEVICE_OBJECT DeviceObject,
-    __in PIRP Irp
+    _In_ PDEVICE_OBJECT DeviceObject,
+    _Inout_ PIRP Irp
 	)
 {
 	KIRQL				oldIrql;
@@ -640,11 +640,17 @@ DokanEventWrite(
 			else
 				buffer = Irp->AssociatedIrp.SystemBuffer;
 					
-			ASSERT(buffer != NULL);
-			RtlCopyMemory(buffer, eventContext, eventContext->Length);
-						
-			info = eventContext->Length;
-			status = STATUS_SUCCESS;
+			if (buffer != NULL)
+			{
+				RtlCopyMemory(buffer, eventContext, eventContext->Length);
+
+				info = eventContext->Length;
+				status = STATUS_SUCCESS;
+			}
+			else
+			{
+				status = STATUS_INSUFFICIENT_RESOURCES;
+			}
 		}
 
 		DokanFreeEventContext(eventContext);

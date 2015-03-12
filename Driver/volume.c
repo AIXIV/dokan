@@ -21,11 +21,11 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "dokan.h"
 
-
+#pragma alloc_text("PAGED_CODE", DokanDispatchQueryVolumeInformation)
 NTSTATUS
 DokanDispatchQueryVolumeInformation(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
    )
 {
 	NTSTATUS			status = STATUS_INVALID_PARAMETER;
@@ -46,29 +46,18 @@ DokanDispatchQueryVolumeInformation(
 		DDbgPrint("==> DokanQueryVolumeInformation\n");
 		DDbgPrint("  ProcessId %lu\n", IoGetRequestorProcessId(Irp));
 
-		vcb = DeviceObject->DeviceExtension;
-		if (GetIdentifierType(vcb) != VCB) {
-			return STATUS_INVALID_PARAMETER;
-		}
-		dcb = vcb->Dcb;
-
 		irpSp			= IoGetCurrentIrpStackLocation(Irp);
 		buffer			= Irp->AssociatedIrp.SystemBuffer;
 
 		fileObject		= irpSp->FileObject;
-
-		if (fileObject == NULL) {
-			DDbgPrint("  fileObject == NULL\n");
+		if (!DokanGetDispatchParameters(DeviceObject, fileObject, &vcb, &ccb, NULL))
+		{
 			status = STATUS_INVALID_PARAMETER;
 			__leave;
 		}
-
+		dcb = vcb->Dcb;
 
 		DDbgPrint("  FileName: %wZ\n", &fileObject->FileName);
-
-		ccb = fileObject->FsContext2;
-
-		//	ASSERT(ccb != NULL);
 
 		switch(irpSp->Parameters.QueryVolume.FsInformationClass) {
 		case FileFsVolumeInformation:
@@ -183,16 +172,16 @@ DokanDispatchQueryVolumeInformation(
 
 VOID
 DokanCompleteQueryVolumeInformation(
-	__in PIRP_ENTRY			IrpEntry,
-	__in PEVENT_INFORMATION	EventInfo
-	)
+	_In_ PIRP_ENTRY			IrpEntry,
+	_In_ PEVENT_INFORMATION	EventInfo
+)
 {
 	PIRP				irp;
 	PIO_STACK_LOCATION	irpSp;
-	NTSTATUS			status   = STATUS_SUCCESS;
-	ULONG				info	 = 0;
-	ULONG				bufferLen= 0;
-	PVOID				buffer	 = NULL;
+	NTSTATUS			status = STATUS_SUCCESS;
+	ULONG				info = 0;
+	ULONG				bufferLen = 0;
+	PVOID				buffer = NULL;
 	PDokanCCB			ccb;
 
 	//FsRtlEnterFileSystem();
@@ -202,37 +191,42 @@ DokanCompleteQueryVolumeInformation(
 	irp = IrpEntry->Irp;
 	irpSp = IrpEntry->IrpSp;
 
-	ccb = IrpEntry->FileObject->FsContext2;
+	if (!DokanGetDispatchContext(IrpEntry->FileObject, &ccb, NULL))
+	{
+		status = STATUS_INVALID_PARAMETER;
+	}
+	else
+	{
 
-	//ASSERT(ccb != NULL);
+		// does not save Context!!
+		// ccb->UserContext = EventInfo->Context;
 
-	// does not save Context!!
-	// ccb->UserContext = EventInfo->Context;
+		// buffer which is used to copy VolumeInfo
+		buffer = irp->AssociatedIrp.SystemBuffer;
 
-	// buffer which is used to copy VolumeInfo
-	buffer = irp->AssociatedIrp.SystemBuffer;
+		// available buffer size to inform
+		bufferLen = irpSp->Parameters.QueryVolume.Length;
 
-	// available buffer size to inform
-	bufferLen = irpSp->Parameters.QueryVolume.Length;
+		// if buffer is invalid or short of length
+		if (bufferLen == 0 || buffer == NULL || bufferLen < EventInfo->BufferLength) {
 
-	// if buffer is invalid or short of length
-	if (bufferLen == 0 || buffer == NULL || bufferLen < EventInfo->BufferLength) {
+			info = 0;
+			status = STATUS_INSUFFICIENT_RESOURCES;
 
-		info   = 0;
-		status = STATUS_INSUFFICIENT_RESOURCES;
+		}
+		else {
 
-	} else {
+			// copy the information from user-mode to specified buffer
+			ASSERT(buffer != NULL);
 
-		// copy the information from user-mode to specified buffer
-		ASSERT(buffer != NULL);
-		
-		RtlZeroMemory(buffer, bufferLen);
-		RtlCopyMemory(buffer, EventInfo->Buffer, EventInfo->BufferLength);
+			RtlZeroMemory(buffer, bufferLen);
+			RtlCopyMemory(buffer, EventInfo->Buffer, EventInfo->BufferLength);
 
-		// the written length
-		info = EventInfo->BufferLength;
+			// the written length
+			info = EventInfo->BufferLength;
 
-		status = EventInfo->Status;
+			status = EventInfo->Status;
+		}
 	}
 
 
@@ -247,11 +241,11 @@ DokanCompleteQueryVolumeInformation(
 }
 
 
-
+#pragma alloc_text("PAGED_CODE", DokanDispatchSetVolumeInformation)
 NTSTATUS
 DokanDispatchSetVolumeInformation(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
    )
 {
 	NTSTATUS status = STATUS_INVALID_PARAMETER;

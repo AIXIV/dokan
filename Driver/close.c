@@ -23,10 +23,11 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 
+#pragma alloc_text("PAGED_CODE", DokanDispatchClose)
 NTSTATUS
 DokanDispatchClose(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
 	)
 
 /*++
@@ -75,33 +76,38 @@ Return Value:
 		DDbgPrint("  ProcessId %lu\n", IoGetRequestorProcessId(Irp));
 		DokanPrintFileName(fileObject);
 
+		ccb = fileObject->FsContext2;
+
 		vcb = DeviceObject->DeviceExtension;
 
 		if (GetIdentifierType(vcb) != VCB ||
-			!DokanCheckCCB(vcb->Dcb, fileObject->FsContext2)) {
+			!DokanCheckCCB(vcb->Dcb, ccb)) {
 
-			if (fileObject->FsContext2) {
-				ccb = fileObject->FsContext2;
-				ASSERT(ccb != NULL);
-
+			if (ccb) {
 				fcb = ccb->Fcb;
-				ASSERT(fcb != NULL);
 
-				DDbgPrint("   Free CCB:%X\n", ccb);
+				DDbgPrint("   Free CCB:%p\n", ccb);
+
 				DokanFreeCCB(ccb);
 
-				DokanFreeFCB(fcb);
+				ASSERT(fcb != NULL);
+				if (fcb != NULL)
+				{
+					DokanFreeFCB(fcb);
+				}
 			}
 
-			status = STATUS_SUCCESS;
+			status = STATUS_SUCCESS; // TODO: is this success?
 			__leave;
 		}
 
-		ccb = fileObject->FsContext2;
-		ASSERT(ccb != NULL);
-
+		ASSERT(ccb != NULL); // will never occur since here DokanCheckCCB() was true and thus ccb != NULL. this statement calms SAL however
 		fcb = ccb->Fcb;
-		ASSERT(fcb != NULL);
+		if (fcb == NULL)
+		{
+			status = STATUS_SUCCESS; // TODO: is this success?
+			__leave;
+		}
 
 		eventLength = sizeof(EVENT_CONTEXT) + fcb->FileName.Length;
 		eventContext = AllocateEventContext(vcb->Dcb, Irp, eventLength, ccb);
@@ -109,10 +115,10 @@ Return Value:
 		if (eventContext == NULL) {
 			//status = STATUS_INSUFFICIENT_RESOURCES;
 			DDbgPrint("   eventContext == NULL\n");
-			DDbgPrint("   Free CCB:%X\n", ccb);
+			DDbgPrint("   Free CCB:%p\n", ccb);
 			DokanFreeCCB(ccb);
 			DokanFreeFCB(fcb);
-			status = STATUS_SUCCESS;
+			status = STATUS_SUCCESS; // TODO: is this success?
 			__leave;
 		}
 
@@ -123,7 +129,7 @@ Return Value:
 		eventContext->Close.FileNameLength = fcb->FileName.Length;
 		RtlCopyMemory(eventContext->Close.FileName, fcb->FileName.Buffer, fcb->FileName.Length);
 
-		DDbgPrint("   Free CCB:%X\n", ccb);
+		DDbgPrint("   Free CCB:%p\n", ccb);
 		DokanFreeCCB(ccb);
 
 		DokanFreeFCB(fcb);

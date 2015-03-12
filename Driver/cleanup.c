@@ -22,10 +22,11 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "dokan.h"
 
 
+#pragma alloc_text("PAGED_CODE", DokanDispatchCleanup)
 NTSTATUS
 DokanDispatchCleanup(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
 	)
 
 /*++
@@ -49,8 +50,8 @@ Return Value:
 	PIO_STACK_LOCATION	irpSp;
 	NTSTATUS			status = STATUS_INVALID_PARAMETER;
 	PFILE_OBJECT		fileObject;
-	PDokanCCB			ccb = NULL;
-	PDokanFCB			fcb = NULL;
+	PDokanCCB			ccb;
+	PDokanFCB			fcb;
 	PEVENT_CONTEXT		eventContext;
 	ULONG				eventLength;
 
@@ -68,25 +69,11 @@ Return Value:
 		DDbgPrint("  ProcessId %lu\n", IoGetRequestorProcessId(Irp));
 		DokanPrintFileName(fileObject);
 
-		// Cleanup must be success in any case
-		if (fileObject == NULL) {
-			DDbgPrint("  fileObject == NULL\n");
-			status = STATUS_SUCCESS;
+		if (!DokanGetDispatchParameters(DeviceObject, fileObject, &vcb, &ccb, &fcb))
+		{
+			status = STATUS_SUCCESS; // TODO: really? why not report failure if failure it is?
 			__leave;
 		}
-
-		vcb = DeviceObject->DeviceExtension;
-		if (GetIdentifierType(vcb) != VCB ||
-			!DokanCheckCCB(vcb->Dcb, fileObject->FsContext2)) {
-			status = STATUS_SUCCESS;
-			__leave;
-		}
-
-		ccb = fileObject->FsContext2;
-		ASSERT(ccb != NULL);
-
-		fcb = ccb->Fcb;
-		ASSERT(fcb != NULL);
 
 		eventLength = sizeof(EVENT_CONTEXT) + fcb->FileName.Length;
 		eventContext = AllocateEventContext(vcb->Dcb, Irp, eventLength, ccb);
@@ -135,8 +122,8 @@ Return Value:
 
 VOID
 DokanCompleteCleanup(
-	 __in PIRP_ENTRY			IrpEntry,
-	 __in PEVENT_INFORMATION	EventInfo
+	 _In_ PIRP_ENTRY			IrpEntry,
+	 _In_ PEVENT_INFORMATION	EventInfo
 	 )
 {
 	PIRP				irp;
@@ -150,29 +137,29 @@ DokanCompleteCleanup(
 
 	DDbgPrint("==> DokanCompleteCleanup\n");
 
-	irp   = IrpEntry->Irp;
+	irp = IrpEntry->Irp;
 	irpSp = IrpEntry->IrpSp;
 
 	fileObject = IrpEntry->FileObject;
-	ASSERT(fileObject != NULL);
 
-	ccb	= fileObject->FsContext2;
-	ASSERT(ccb != NULL);
-
-	ccb->UserContext = EventInfo->Context;
-	//DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
-
-	fcb = ccb->Fcb;
-	ASSERT(fcb != NULL);
-
-	vcb = fcb->Vcb;
-
-	status = EventInfo->Status;
-
-	if (fcb->Flags & DOKAN_FILE_DIRECTORY) {
-		FsRtlNotifyCleanup(vcb->NotifySync, &vcb->DirNotifyList, ccb);
+	if (!DokanGetDispatchContext(fileObject, &ccb, &fcb))
+	{
+		status = STATUS_INVALID_PARAMETER;
 	}
+	else
+	{
+		ccb->UserContext = EventInfo->Context;
+		//DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
 
+		vcb = fcb->Vcb;
+
+		status = EventInfo->Status;
+
+		if (fcb->Flags & DOKAN_FILE_DIRECTORY) {
+			FsRtlNotifyCleanup(vcb->NotifySync, &vcb->DirNotifyList, ccb);
+		}
+	}
+	
 	irp->IoStatus.Status = status;
 	irp->IoStatus.Information = 0;
 	IoCompleteRequest(irp, IO_NO_INCREMENT);

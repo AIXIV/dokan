@@ -1,2 +1,2 @@
-cd /d "C:\Development\dokAIX\dirs-Package" &msbuild "dirs-Package.vcxproj" /t:sdvViewer /p:configuration="Win8 Release" /p:platform=Win32
+cd /d "C:\Development\Projects\dokAIX\Package" &msbuild "dokAIXDriverPackage.vcxproj" /t:sdvViewer /p:configuration="Win8.1 Release" /p:platform=x64
 exit %errorlevel% 

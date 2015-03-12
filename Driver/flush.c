@@ -21,11 +21,11 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "dokan.h"
 
-
+#pragma alloc_text("PAGED_CODE", DokanDispatchFlush)
 NTSTATUS
 DokanDispatchFlush(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
 	)
 {
 	PIO_STACK_LOCATION	irpSp;
@@ -48,27 +48,14 @@ DokanDispatchFlush(
 		irpSp		= IoGetCurrentIrpStackLocation(Irp);
 		fileObject	= irpSp->FileObject;
 
-		if (fileObject == NULL) {
-			DDbgPrint("  fileObject == NULL\n");
-			status = STATUS_SUCCESS;
+		if (!DokanGetDispatchParameters(DeviceObject, fileObject, &vcb, &ccb, &fcb))
+		{
+			status = STATUS_INVALID_PARAMETER; // TODO: was STATUS_SUCCESS for whatever reason
 			__leave;
 		}
-
-		vcb = DeviceObject->DeviceExtension;
-		if (GetIdentifierType(vcb) != VCB ||
-			!DokanCheckCCB(vcb->Dcb, fileObject->FsContext2)) {
-			status = STATUS_SUCCESS;
-			__leave;
-		}
-
 
 		DokanPrintFileName(fileObject);
 
-		ccb = fileObject->FsContext2;
-		ASSERT(ccb != NULL);
-
-		fcb = ccb->Fcb;
-		ASSERT(fcb != NULL);
 
 		eventLength = sizeof(EVENT_CONTEXT) + fcb->FileName.Length;
 		eventContext = AllocateEventContext(vcb->Dcb, Irp, eventLength, ccb);
@@ -114,8 +101,8 @@ DokanDispatchFlush(
 
 VOID
 DokanCompleteFlush(
-	 __in PIRP_ENTRY			IrpEntry,
-	 __in PEVENT_INFORMATION	EventInfo
+	 _In_ PIRP_ENTRY			IrpEntry,
+	 _In_ PEVENT_INFORMATION	EventInfo
 	 )
 {
 	PIRP				irp;
@@ -123,7 +110,6 @@ DokanCompleteFlush(
 	NTSTATUS			status   = STATUS_SUCCESS;
 	ULONG				info	 = 0;
 	PDokanCCB			ccb;
-	PDokanFCB			fcb;
 	PFILE_OBJECT		fileObject;
 
 	irp   = IrpEntry->Irp;
@@ -134,13 +120,18 @@ DokanCompleteFlush(
 	DDbgPrint("==> DokanCompleteFlush\n");
 
 	fileObject = irpSp->FileObject;
-	ccb = fileObject->FsContext2;
-	ASSERT(ccb != NULL);
 
-	ccb->UserContext = EventInfo->Context;
-	DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
+	if (!DokanGetDispatchContext(fileObject, &ccb, NULL))
+	{
+		status = STATUS_INVALID_PARAMETER;
+	}
+	else
+	{
+		ccb->UserContext = EventInfo->Context;
+		DDbgPrint("   set Context %X\n", (ULONG)ccb->UserContext);
 
-	status = EventInfo->Status;
+		status = EventInfo->Status;
+	}
 
 	irp->IoStatus.Status = status;
 	irp->IoStatus.Information = 0;

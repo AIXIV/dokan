@@ -28,7 +28,7 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 VOID
 PrintUnknownDeviceIoctlCode(
-	__in ULONG	IoctlCode
+	_In_ ULONG	IoctlCode
 	)
 {
 	PCHAR baseCodeStr = "unknown";
@@ -61,8 +61,8 @@ PrintUnknownDeviceIoctlCode(
 
 NTSTATUS
 GlobalDeviceControl(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_In_ PIRP Irp
 	)
 {
 	PIO_STACK_LOCATION	irpSp;
@@ -108,8 +108,8 @@ GlobalDeviceControl(
 
 NTSTATUS
 DiskDeviceControl(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_In_ PIRP Irp
 	)
 {
 	PIO_STACK_LOCATION	irpSp;
@@ -306,7 +306,7 @@ DiskDeviceControl(
 				Irp->IoStatus.Information = FIELD_OFFSET(MOUNTDEV_UNIQUE_ID, UniqueId[0]) +
 											uniqueId->UniqueIdLength;
 				status = STATUS_SUCCESS;
-				DDbgPrint("  UniqueName %ws\n", uniqueId->UniqueId);
+				DDbgPrint("  UniqueName %s\n", uniqueId->UniqueId);
 				break;
 			} else {
 				Irp->IoStatus.Information = sizeof(MOUNTDEV_UNIQUE_ID);
@@ -396,8 +396,8 @@ DiskDeviceControl(
 
 NTSTATUS
 DokanDispatchDeviceControl(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
 	)
 
 /*++

@@ -22,8 +22,8 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 
 NTSTATUS
 DokanDispatchQuerySecurity(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
 	)
 {
 	PIO_STACK_LOCATION	irpSp;
@@ -51,30 +51,16 @@ DokanDispatchQuerySecurity(
 		irpSp = IoGetCurrentIrpStackLocation(Irp);
 		fileObject = irpSp->FileObject;
 
-		if (fileObject == NULL) {
-			DDbgPrint("  fileObject == NULL\n");
+		if (!DokanGetDispatchParameters(DeviceObject, fileObject, &vcb, &ccb, &fcb))
+		{
 			status = STATUS_INVALID_PARAMETER;
 			__leave;
 		}
 
-		vcb = DeviceObject->DeviceExtension;
-		if (GetIdentifierType(vcb) != VCB) {
-			DbgPrint("    DeviceExtension != VCB\n");
-			status = STATUS_INVALID_PARAMETER;
-			__leave;
-		}
 		dcb = vcb->Dcb;
 
 		DDbgPrint("  ProcessId %lu\n", IoGetRequestorProcessId(Irp));
 		DokanPrintFileName(fileObject);
-
-		ccb = fileObject->FsContext2;
-		if (ccb == NULL) {
-			DDbgPrint("    ccb == NULL\n");
-			status = STATUS_INVALID_PARAMETER;
-			__leave;
-		}
-		fcb = ccb->Fcb;
 
 		bufferLength = irpSp->Parameters.QuerySecurity.Length;
 		securityInfo = &irpSp->Parameters.QuerySecurity.SecurityInformation;
@@ -144,8 +130,8 @@ DokanDispatchQuerySecurity(
 
 VOID
 DokanCompleteQuerySecurity(
-	__in PIRP_ENTRY		IrpEntry,
-	__in PEVENT_INFORMATION EventInfo
+	_In_ PIRP_ENTRY		IrpEntry,
+	_In_ PEVENT_INFORMATION EventInfo
 	)
 {
 	PIRP		irp;
@@ -191,13 +177,10 @@ DokanCompleteQuerySecurity(
 	}
 
 	fileObject = IrpEntry->FileObject;
-	ASSERT(fileObject != NULL);
 
-	ccb = fileObject->FsContext2;
-	if (ccb != NULL) {
-		ccb->UserContext = EventInfo->Context;
-	} else {
-		DDbgPrint("  ccb == NULL\n");
+	if (DokanGetDispatchContext(fileObject, &ccb, NULL))
+	{
+		ccb->UserContext = EventInfo->Context; // ccb == NULL is invalid parameter?
 	}
 
 	irp->IoStatus.Status = status;
@@ -212,8 +195,8 @@ DokanCompleteQuerySecurity(
 
 NTSTATUS
 DokanDispatchSetSecurity(
-	__in PDEVICE_OBJECT DeviceObject,
-	__in PIRP Irp
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_Inout_ PIRP Irp
 	)
 {
 	PIO_STACK_LOCATION	irpSp;
@@ -239,30 +222,16 @@ DokanDispatchSetSecurity(
 		irpSp = IoGetCurrentIrpStackLocation(Irp);
 		fileObject = irpSp->FileObject;
 
-		if (fileObject == NULL) {
-			DDbgPrint("  fileObject == NULL\n");
+		if (!DokanGetDispatchParameters(DeviceObject, fileObject, &vcb, &ccb, &fcb))
+		{
 			status = STATUS_INVALID_PARAMETER;
 			__leave;
 		}
 
-		vcb = DeviceObject->DeviceExtension;
-		if (GetIdentifierType(vcb) != VCB) {
-			DbgPrint("    DeviceExtension != VCB\n");
-			status = STATUS_INVALID_PARAMETER;
-			__leave;
-		}
 		dcb = vcb->Dcb;
 
 		DDbgPrint("  ProcessId %lu\n", IoGetRequestorProcessId(Irp));
 		DokanPrintFileName(fileObject);
-
-		ccb = fileObject->FsContext2;
-		if (ccb == NULL) {
-			DDbgPrint("    ccb == NULL\n");
-			status = STATUS_INVALID_PARAMETER;
-			__leave;
-		}
-		fcb = ccb->Fcb;
 
 		securityInfo = &irpSp->Parameters.SetSecurity.SecurityInformation;
 
@@ -336,8 +305,8 @@ DokanDispatchSetSecurity(
 
 VOID
 DokanCompleteSetSecurity(
-	__in PIRP_ENTRY		IrpEntry,
-	__in PEVENT_INFORMATION EventInfo
+	_In_ PIRP_ENTRY		IrpEntry,
+	_In_ PEVENT_INFORMATION EventInfo
 	)
 {
 	PIRP				irp;
@@ -352,13 +321,10 @@ DokanCompleteSetSecurity(
 	irpSp = IrpEntry->IrpSp;	
 
 	fileObject = IrpEntry->FileObject;
-	ASSERT(fileObject != NULL);
 
-	ccb = fileObject->FsContext2;
-	if (ccb != NULL) {
-		ccb->UserContext = EventInfo->Context;
-	} else {
-		DDbgPrint("  ccb == NULL\n");
+	if (DokanGetDispatchContext(fileObject, &ccb, NULL))
+	{
+		ccb->UserContext = EventInfo->Context; // ccb == NULL is invalid parameter?
 	}
 
 	status = EventInfo->Status;
