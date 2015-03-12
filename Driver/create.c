@@ -399,7 +399,9 @@ Return Value:
 						fileObject->FileName.Length);
 	   }
 
-	   // TODO: is this necessary? causes SAL warning
+	   // This is necessary since the Dokan volumes are not correctly mounted by the system
+	   // but only by manipulating the vpb directly in the driver. thus, the incoming vpb of
+	   // the file object is always NULL here and must be set correctly
 		if (relatedFileObject != NULL) {
 			fileObject->Vpb = relatedFileObject->Vpb;
 		} else {
