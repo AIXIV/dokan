@@ -60,49 +60,6 @@ DokanFastIoCheckIfPossible (
 	return FALSE;
 }
 
-/*
-* TODO: Consider removing the next two functions as they seem to be obsolete
-* (fast io is not available according to DokanFastIoCheckIfPossible)
-* and cause SAL warnings
-*/
-
-FAST_IO_ACQUIRE_FILE DokanAcquireForCreateSection;
-VOID
-DokanAcquireForCreateSection(
-	_In_ PFILE_OBJECT FileObject
-	)
-{
-	PFSRTL_ADVANCED_FCB_HEADER	header;
-
-	header = FileObject->FsContext;
-	if (header && header->Resource) {
-		KeEnterCriticalRegion();
-		ExAcquireResourceExclusiveLite(header->Resource, TRUE);
-		KeLeaveCriticalRegion();
-	}
-
-	DDbgPrint("DokanAcquireForCreateSection\n");
-}
-
-FAST_IO_RELEASE_FILE DokanReleaseForCreateSection;
-VOID
-DokanReleaseForCreateSection(
-   _In_ PFILE_OBJECT FileObject
-	)
-{
-	PFSRTL_ADVANCED_FCB_HEADER	header;
-
-	header = FileObject->FsContext;
-
-	if (header && header->Resource) {
-		KeEnterCriticalRegion();
-		ExReleaseResourceLite(header->Resource);
-		KeLeaveCriticalRegion();
-	}
-
-	DDbgPrint("DokanReleaseForCreateSection\n");
-}
-
 NTSTATUS
 DriverEntry(
 	_In_ PDRIVER_OBJECT  DriverObject,
@@ -186,14 +143,6 @@ Return Value:
 
 		fastIoDispatch->SizeOfFastIoDispatch = sizeof(FAST_IO_DISPATCH);
 		fastIoDispatch->FastIoCheckIfPossible = DokanFastIoCheckIfPossible;
-		fastIoDispatch->FastIoRead = FsRtlCopyRead;
-		fastIoDispatch->FastIoWrite = FsRtlCopyWrite;
-		fastIoDispatch->AcquireFileForNtCreateSection = DokanAcquireForCreateSection;
-		fastIoDispatch->ReleaseFileForNtCreateSection = DokanReleaseForCreateSection;
-		fastIoDispatch->MdlRead = FsRtlMdlReadDev;
-		fastIoDispatch->MdlReadComplete = FsRtlMdlReadCompleteDev;
-		fastIoDispatch->PrepareMdlWrite = FsRtlPrepareMdlWriteDev;
-		fastIoDispatch->MdlWriteComplete = FsRtlMdlWriteCompleteDev;
 
 #pragma warning(suppress: 28175)
 		DriverObject->FastIoDispatch = fastIoDispatch;
