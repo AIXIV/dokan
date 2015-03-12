@@ -104,31 +104,6 @@ DokanReleaseForCreateSection(
 }
 
 NTSTATUS
-DokanFilterCallbackAcquireForCreateSection(
-	_In_ PFS_FILTER_CALLBACK_DATA CallbackData,
-	_Outptr_result_maybenull_ PVOID *CompletionContext
-	)
-{
-	PFSRTL_ADVANCED_FCB_HEADER	header;
-	DDbgPrint("DokanFilterCallbackAcquireForCreateSection\n");
-
-	CompletionContext = NULL;
-
-	header = CallbackData->FileObject->FsContext;
-
-	if (header && header->Resource) {
-		ExAcquireResourceExclusiveLite(header->Resource, TRUE);
-	}
-
-	if (CallbackData->Parameters.AcquireForSectionSynchronization.SyncType
-		!= SyncTypeCreateSection) {
-		return STATUS_FSFILTER_OP_COMPLETED_SUCCESSFULLY;
-	} else {
-		return STATUS_FILE_LOCKED_WITH_WRITERS;
-	}
-}
-
-NTSTATUS
 DriverEntry(
 	_In_ PDRIVER_OBJECT  DriverObject,
 	_In_ PUNICODE_STRING RegistryPath
@@ -156,7 +131,6 @@ Return Value:
 	NTSTATUS			status;
 	PFAST_IO_DISPATCH	fastIoDispatch;
 	UNICODE_STRING		functionName;
-	FS_FILTER_CALLBACKS filterCallbacks;
 	PDOKAN_GLOBAL		dokanGlobal = NULL;
 
 	DDbgPrint("==> DriverEntry ver.%x, %s %s\n", DOKAN_DRIVER_VERSION, __DATE__, __TIME__);
@@ -233,20 +207,6 @@ Return Value:
 		RtlInitUnicodeString(&functionName, L"FsRtlTeardownPerStreamContexts");
 		DokanFsRtlTeardownPerStreamContexts = MmGetSystemRoutineAddress(&functionName);
 #endif
-
-		RtlZeroMemory(&filterCallbacks, sizeof(FS_FILTER_CALLBACKS));
-
-		// only be used by filter driver?
-		// TODO: maybe remove
-		filterCallbacks.SizeOfFsFilterCallbacks = sizeof(FS_FILTER_CALLBACKS);
-		filterCallbacks.PreAcquireForSectionSynchronization = DokanFilterCallbackAcquireForCreateSection;
-
-		status = FsRtlRegisterFileSystemFilterCallbacks(DriverObject, &filterCallbacks);
-
-		if (!NT_SUCCESS(status)) {
-			DDbgPrint("  FsRtlRegisterFileSystemFilterCallbacks returned 0x%x\n", status);
-			__leave;
-		}
 	}
 	__finally
 	{
