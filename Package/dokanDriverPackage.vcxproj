@@ -61,7 +61,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0B8A74CD-501B-468E-895D-9A991EB09BDE}</ProjectGuid>
     <RootNamespace>$(MSBuildProjectName)</RootNamespace>
-    <ProjectName>dokAix-Package</ProjectName>
+    <ProjectName>dokan-Package</ProjectName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Debug|Win32'" Label="Configuration">
     <TargetVersion>WindowsV6.3</TargetVersion>
@@ -190,7 +190,7 @@
     <FilesToPackage Include="@(Inf->'%(CopyOutput)')" Condition="'@(Inf)'!=''" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Control\dokAIXControl.vcxproj">
+    <ProjectReference Include="..\Control\dokanControl.vcxproj">
       <Project>{97f87d2f-21b1-4019-a8f0-47fa12a534de}</Project>
       <Private>true</Private>
       <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
@@ -198,7 +198,7 @@
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
       <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
-    <ProjectReference Include="..\Driver\dokAIXDriver.vcxproj">
+    <ProjectReference Include="..\Driver\dokanDriver.vcxproj">
       <Project>{62b97017-9b41-4c6a-a28b-b02c2e93a705}</Project>
       <Private>true</Private>
       <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
@@ -206,7 +206,7 @@
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
       <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
-    <ProjectReference Include="..\Library\dokAIXLibrary.vcxproj">
+    <ProjectReference Include="..\Library\dokanLibrary.vcxproj">
       <Project>{8e6bf553-2247-4d6b-9d38-abb174aeab7b}</Project>
       <Private>true</Private>
       <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
@@ -214,7 +214,7 @@
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
       <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
-    <ProjectReference Include="..\MountService\dokAIXMountService.vcxproj">
+    <ProjectReference Include="..\MountService\dokanMountService.vcxproj">
       <Project>{8ea73c4a-0e60-4cda-a9e7-f27b62f1ba32}</Project>
       <Private>true</Private>
       <ReferenceOutputAssembly>true</ReferenceOutputAssembly>

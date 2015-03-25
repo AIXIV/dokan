@@ -54,7 +54,7 @@
     <PlatformToolset>WindowsApplicationForDrivers8.1</PlatformToolset>
     <ConfigurationType>Application</ConfigurationType>
     <DriverType />
-    <TARGETNAME>dokAIXctl</TARGETNAME>
+    <TARGETNAME>dokanctl</TARGETNAME>
     <Configuration Condition="'$(Configuration)' == ''">Win8.1 Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">Win32</Platform>
   </PropertyGroup>
@@ -272,7 +272,7 @@
     <ClInclude Exclude="@(ClInclude)" Include="*.h;*.hpp;*.hxx;*.hm;*.inl;*.xsd" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Library\dokAIXLibrary.vcxproj">
+    <ProjectReference Include="..\Library\dokanLibrary.vcxproj">
       <Project>{8e6bf553-2247-4d6b-9d38-abb174aeab7b}</Project>
     </ProjectReference>
   </ItemGroup>
