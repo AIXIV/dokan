@@ -30,9 +30,7 @@ extern "C" {
 
 #define DOKAN_MOUNT_POINT_SUPPORTED_VERSION 600
 #define DOKAN_SECURITY_SUPPORTED_VERSION	600
-// Begin dokAIX change
 #define DOKAN_MOUNT_COMPLETE_CALLBACK_SUPPORTED_VERSION 700
-// End dokAIX change
 
 #define DOKAN_GLOBAL_DEVICE_NAME	L"\\\\.\\Dokan"
 #define DOKAN_CONTROL_PIPE			L"\\\\.\\pipe\\DokanMounter"

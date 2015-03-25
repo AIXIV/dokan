@@ -22,7 +22,7 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 #ifndef _DOKAN_H_
 #define _DOKAN_H_
 
-#define DOKAN_DRIVER_NAME	L"dokAIX.sys"
+#define DOKAN_DRIVER_NAME	L"dokan.sys"
 
   #ifdef _EXPORTING
 	#define DOKANAPI __declspec(dllimport) __stdcall
@@ -36,11 +36,8 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 extern "C" {
 #endif
 
-// The current Dokan version (ver 0.6.0). Please set this constant on DokanOptions->Version.
-// Increased to ver 0.7.0 for dokAIX, based on the original Dokan ver 0.6.0 as above.
-// Begin dokAIX change
+// The current Dokan version (ver 0.7.0). Please set this constant on DokanOptions->Version.
 #define DOKAN_VERSION		700
-// End dokAIX change
 
 #define DOKAN_OPTION_DEBUG		1 // ouput debug message
 #define DOKAN_OPTION_STDERR		2 // ouput debug message to stderr
@@ -267,9 +264,7 @@ typedef struct _DOKAN_OPERATIONS {
 		ULONG, // SecurityDescriptor length
 		PDOKAN_FILE_INFO);
 
-    // Begin dokAIX change
     void (DOKAN_CALLBACK *MountComplete) ();
-    // End dokAIX change
 
 } DOKAN_OPERATIONS, *PDOKAN_OPERATIONS;
 

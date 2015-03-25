@@ -251,12 +251,10 @@ DokanMain(_In_ PDOKAN_OPTIONS DokanOptions, _In_ PDOKAN_OPERATIONS DokanOperatio
 			NULL);
 	}
 
-    // Begin dokAIX change
     if (DOKAN_MOUNT_COMPLETE_CALLBACK_SUPPORTED_VERSION <= DokanOptions->Version)
     {
         DokanOperations->MountComplete();
     }
-    // End dokAIX change
 
 	// wait for thread terminations
 	WaitForMultipleObjects(threadNum, threadIds, TRUE, INFINITE);

@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <TARGETNAME Condition="'$(OVERRIDE_TARGETNAME)'!='true'">dokAIX</TARGETNAME>
+    <TARGETNAME Condition="'$(OVERRIDE_TARGETNAME)'!='true'">dokan</TARGETNAME>
     <TARGETTYPE Condition="'$(OVERRIDE_TARGETTYPE)'!='true'">DRIVER</TARGETTYPE>
     <TARGETLIBS Condition="'$(OVERRIDE_TARGETLIBS)'!='true'">$(DDK_LIB_PATH)\wdmsec.lib</TARGETLIBS>
     <SOURCES Condition="'$(OVERRIDE_SOURCES)'!='true'">dokan.c  	init.c  	create.c  	close.c  	event.c  	directory.c  	fileinfo.c  	read.c  	write.c  	volume.c  	cleanup.c  	lock.c  	timeout.c  	flush.c  	device.c  	fscontrol.c  	notification.c  	security.c  	access.c  	dokan.rc</SOURCES>
