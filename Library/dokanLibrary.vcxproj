@@ -54,7 +54,7 @@
     <PlatformToolset>WindowsApplicationForDrivers8.1</PlatformToolset>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <DriverType />
-    <TARGETNAME>dokan</TARGETNAME>
+    <TARGETNAME>dokan64</TARGETNAME>
     <Configuration Condition="'$(Configuration)' == ''">Win8.1 Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">Win32</Platform>
   </PropertyGroup>
