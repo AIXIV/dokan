@@ -1,2 +1,2 @@
-1) Install Windows WDK 7.1 and set environment variable WDKPATH to its installation path.
+1) Install Microsoft Visual Studio 2013 (or later versions) and the Microsoft Windows Driver Kit for Windows 8.1.
 2) Build the solution in Visual Studio.
