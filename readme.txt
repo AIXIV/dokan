@@ -1,7 +1,8 @@
 
   Dokan Libary
 
-  Copyright(c) Hiroki Asakawa http://dokan-dev.net/en
+  Copyright (c) Hiroki Asakawa http://dokan-dev.net/en
+  Copyright (c) AIXIV https://github.com/AIXIV/dokan
 
 
 
@@ -9,12 +10,20 @@ What is Dokan Library
 =====================
 
 When you want to create a new file system on Windows, for example to
-improve FAT or NTFS, you need to develope a file system
+improve FAT or NTFS, you need to develop a file system
 driver. Developing a device driver that works in kernel mode on
-windows is extremley difficult.By using Dokan library, you can create
+windows is extremely difficult. By using Dokan library, you can create
 your own file systems very easily without writing device driver. Dokan
-Library is similar to FUSE(Linux user mode file system) but works on
+library is similar to FUSE (Linux user mode file system) but works on
 Windows.
+
+Contributions by AIXIV
+======================
+Dokan was initially developed by Hiroki Asakawa but seems to be no
+longer maintained. In the newer versions of Microsoft Windows, Dokan
+experienced issues which were not fixed in the official repository.
+For internal work, AIXIV addressed these issues and hopes the resulting
+version is valuable for public use.
 
 
 Licensing
@@ -26,9 +35,8 @@ Dokan library contains LGPL, MIT licensed programs.
 - driver (dokan.sys)             LGPL
 - control program (dokanctl.exe) MIT
 - mount service (mouter.exe)     MIT
-- samples (mirror.c)             MIT
 
-For detals, please check license files.
+For details, please check license files.
 LGPL license.lgpl.txt
 GPL  license.gpl.txt
 MIT  license.mit.txt
@@ -39,8 +47,11 @@ You can obtain source files from http://dokan-dev.net/en/download
 Environment
 ===========
 
-Dokan Library works on Windowx XP,2003,Vista,2008,7 x86 and Windows
-2003,Vista,2008,7 x64.
+The AIXIV-modified Dokan library works reliably on 32 and 64 bit versions
+of Microsoft Windows 7, 8 and 8.1.
+It may also work on Microsoft Windows XP (only 32 bit), Vista and
+Microsoft Windows Server 2003 and 2008 but this is not guaranteed and
+therefore currently not supported by the installer until further testing.
 
 
 How it works
@@ -50,7 +61,7 @@ Dokan library contains a user mode DLL (dokan.dll) and a kernel mode
 file system driver (dokan.sys). Once Dokan file system driver is
 installed, you can create file systems which can be seen as normal
 file systems in Windows. The application that creates file systems
-using Dokan library is called File system application. File operation
+using Dokan library is called file system application. File operation
 requests from user programs (e.g., CreateFile, ReadFile, WriteFile,
 ...) will be sent to the Windows I/O subsystem (runs in kernel mode)
 which will subsequently forward the requests to the Dokan file system
@@ -59,7 +70,7 @@ library (dokan.dll), file system applications are able to register
 callback functions to the file system driver. The file system driver
 will invoke these callback routines in order to response to the
 requests it received. The results of the callback routines will be
-sent back to the user program. For example, when Windows Explorer
+sent back to the driver the user program. For example, when Windows Explorer
 requests to open a directory, the OpenDirectory request will be sent
 to Dokan file system driver and the driver will invoke the
 OpenDirectory callback provided by the file system application. The
@@ -84,30 +95,38 @@ SystemFolder\dokan.dll
 SystemFolder\drivers\dokan.sys
    Dokan File System Driver
 
-ProgramFilesFolder\Dokan\DokanLibrary\mounter.exe
+The following files are installed at a location of the user's choice
+(defaulting to ProgramFilesFolder\DokanLibrary):
+
+mounter.exe
    Dokan mouter service
 
-ProgramFilesFolder\Dokan\DokanLibrary\dokanctl.exe
+dokanctl.exe
    Dokan control program
 
-ProgramFilesFolder\Dokan\DokanLibrary\dokan.lib
+readme.txt
+   this file
+   
+license.*.txt
+    text files containing the licenses of the installed programs
+   
+(optional; user choice)
+dokan.lib
    Dokan import library
 
-ProgramFilesFolder\Dokan\DokanLibrary\dokan.h
+dokan.h
    Dokan library header
 
-ProgramFilesFolder\Dokan\DokanLibrary\readme.txt
-   this file
-
-You can use Add/Remove programs in Control Panel to uninstall Dokan.
-It is required to restart your computer after uninstallation.
+You can use add/aemove programs in the control panel to remove Dokan.
+It is required to restart your computer after uninstalling Dokan to
+complete driver removal.
 
 
 How to create your file systems
 ===============================
 
-To create file system, an application needs to implement functions in
-DOKAN_OPERATIONS structure (declared in dokan.h). Once implemented,
+To create file system, an application needs to implement the functions 
+of the DOKAN_OPERATIONS structure (declared in dokan.h). Once implemented,
 you can invoke DokanMain function with DOKAN_OPERATIONS as parameter
 in order to mount the file system. The semantics of functions in
 DOKAN_OPERATIONS is just similar to Windows APIs with the same
@@ -130,7 +149,7 @@ get called by the Dokan file system driver when the file is closed by
 the CloseFile Windows API.  Each function should return 0 when the
 operation succeeded, otherwise it should return a negative value
 represents error code. The error codes are negated Windows System
-Error Codes. For examaple, when CreateFile can't open a file, you
+Error Codes. For example, when CreateFile can't open a file, you
 should return -2( -1 * ERROR_FILE_NOT_FOUND).
 
 The last parameter of each function is a DOKAN_FILE_INFO structure :
@@ -163,7 +182,7 @@ follows:
   IsDirectory : determine if the opened file is a directory, see
   exceptions bellow.
 
-
+File opening/creation callbacks:
    int (*CreateFile) (
        LPCWSTR,      // FileName
        DWORD,        // DesiredAccess
@@ -193,6 +212,7 @@ CreateFile should return ERROR_ALREADY_EXISTS (183) when the
 CreationDisposition is CREATE_ALWAYS or OPEN_ALWAYS and the file under
 question has already existed.
 
+File closing/cleanup callbacks:
    int (*Cleanup) (
        LPCWSTR,      // FileName
        PDOKAN_FILE_INFO);
@@ -213,6 +233,7 @@ or ReadFile function may be invoked after Cleanup in order to complete
 the I/O operations. The file system application should also properly
 work in this case.
 
+File lookup/listing callbacks:
    int (*FindFiles) (
        LPCWSTR,           // PathName
        PFillFindData,     // call this function with PWIN32_FIND_DATAW
@@ -313,12 +334,12 @@ otherwise, the following error code is returned.
 Unmounting
 ==========
 
-File system can be unmounted by calling the function DokanUnmount.  In
-most cases when the programs or shells use the file system hang,
+File system can be unmounted by calling the function DokanUnmount.
+In most cases when the programs or shells use the file system freeze,
 unmount operation will solve the problems by bringing the system to
 the previous state when the file system is not mounted.
 
-User may use DokanCtl to unmount file system like this:
+User may use DokanCtl to unmount a file system manually like this:
    > dokanctl.exe /u DriveLetter
 
 
