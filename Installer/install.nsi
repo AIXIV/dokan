@@ -112,15 +112,12 @@ RequestExecutionLevel admin
         DetailPrint "Successfully unregistered driver!"
     ${Else}
         DetailPrint "Driver removal failed!"
-        Abort
     ${EndIf}
     ExecWait '"$INSTDIR\dokanctl.exe" /r s' $0
     ${If} $0 == 0
         DetailPrint "Successfully unregistered mounter service!"
     ${Else}
         DetailPrint "Mounter service removal failed!"
-        ExecWait '"$INSTDIR\dokanctl.exe" /i d'
-        Abort
     ${EndIf}
 
     DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DokanLibrary"
