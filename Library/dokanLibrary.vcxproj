@@ -54,7 +54,6 @@
     <PlatformToolset>WindowsApplicationForDrivers8.1</PlatformToolset>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <DriverType />
-    <TARGETNAME>dokan64</TARGETNAME>
     <Configuration Condition="'$(Configuration)' == ''">Win8.1 Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">Win32</Platform>
   </PropertyGroup>
@@ -76,50 +75,62 @@
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Win8.1 Debug|Win32'">
     <TargetVersion>WindowsV6.3</TargetVersion>
     <UseDebugLibraries>True</UseDebugLibraries>
+    <TARGETNAME>dokan</TARGETNAME>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|Win32'">
     <TargetVersion>Win8</TargetVersion>
     <UseDebugLibraries>True</UseDebugLibraries>
+    <TARGETNAME>dokan</TARGETNAME>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|Win32'">
     <TargetVersion>Win7</TargetVersion>
     <UseDebugLibraries>True</UseDebugLibraries>
+    <TARGETNAME>dokan</TARGETNAME>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Win8.1 Release|Win32'">
     <TargetVersion>WindowsV6.3</TargetVersion>
     <UseDebugLibraries>False</UseDebugLibraries>
+    <TARGETNAME>dokan</TARGETNAME>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Win8 Release|Win32'">
     <TargetVersion>Win8</TargetVersion>
     <UseDebugLibraries>False</UseDebugLibraries>
+    <TARGETNAME>dokan</TARGETNAME>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Win7 Release|Win32'">
     <TargetVersion>Win7</TargetVersion>
     <UseDebugLibraries>False</UseDebugLibraries>
+    <TARGETNAME>dokan</TARGETNAME>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Win8.1 Debug|x64'">
     <TargetVersion>WindowsV6.3</TargetVersion>
     <UseDebugLibraries>True</UseDebugLibraries>
+    <TARGETNAME>dokan64</TARGETNAME>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|x64'">
     <TargetVersion>Win8</TargetVersion>
     <UseDebugLibraries>True</UseDebugLibraries>
+    <TARGETNAME>dokan64</TARGETNAME>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|x64'">
     <TargetVersion>Win7</TargetVersion>
     <UseDebugLibraries>True</UseDebugLibraries>
+    <TARGETNAME>dokan64</TARGETNAME>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Win8.1 Release|x64'">
     <TargetVersion>WindowsV6.3</TargetVersion>
     <UseDebugLibraries>False</UseDebugLibraries>
+    <TARGETNAME>dokan64</TARGETNAME>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Win8 Release|x64'">
     <TargetVersion>Win8</TargetVersion>
     <UseDebugLibraries>False</UseDebugLibraries>
+    <TARGETNAME>dokan64</TARGETNAME>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'">
     <TargetVersion>Win7</TargetVersion>
     <UseDebugLibraries>False</UseDebugLibraries>
+    <TARGETNAME>dokan64</TARGETNAME>
   </PropertyGroup>
   <!-- Needed by any VcxProj -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
