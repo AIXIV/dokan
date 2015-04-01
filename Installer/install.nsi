@@ -4,7 +4,7 @@
 !include x64.nsh
 !include WinVer.nsh
 
-Name "Dokan Library Installer ${VERSION}"
+Name "Dokan Library ${VERSION}"
 OutFile "DokanInstall_${VERSION}.exe"
 
 InstallDir $PROGRAMFILES64\DokanLibrary
