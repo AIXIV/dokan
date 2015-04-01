@@ -25,7 +25,6 @@ RequestExecutionLevel admin
 
 !macro LicenseFiles
     File ..\readme.txt
-    File ..\readme.ja.txt
     File ..\license.gpl.txt
     File ..\license.lgpl.txt
     File ..\license.mit.txt
@@ -73,6 +72,13 @@ RequestExecutionLevel admin
     ${DisableX64FSRedirection}
     !insertmacro X64DriverFiles ${os}
     ${EnableX64FSRedirection}
+!macroend
+
+!macro DevelFiles os
+    SetOutPath $INSTDIR
+    File ..\Library\dokan.h
+    File ..\Library\${os}Release\x86\dokan.lib
+    File ..\Library\${os}Release\x64\dokan64.lib
 !macroend
 
 !macro DokanSetup
@@ -157,6 +163,18 @@ Section "Dokan Library x64" section_library_x64
     ${EnableX64FSRedirection}
 SectionEnd
 
+Section "Development Files" section_library_devel
+    ${If} ${IsWin7}
+        !insertmacro DevelFiles "Win7"
+    ${ElseIf} ${IsWin8}
+        !insertmacro DevelFiles "Win8"
+    ${ElseIf} ${IsWin8.1}
+        !insertmacro DevelFiles "Win8.1"
+    ${Else}
+        !insertmacro DevelFiles "Win7"
+    ${EndIf}
+SectionEnd
+
 SectionGroupEnd
 
 SectionGroup "Dokan Driver" sectiongroup_driver
@@ -223,6 +241,7 @@ Function .onInit
     ${If} ${IsWin7}
     ${ElseIf} ${IsWin8}
     ${ElseIf} ${IsWin8.1}
+    ;${ElseIf} ${IsWinVista}
     ${Else}
       MessageBox MB_OK "Your OS is not supported. Dokan library supports Windows 7, 8 and 8.1."
       Abort
@@ -232,7 +251,6 @@ Function .onInit
   ;${If} ${RunningX64}
     ${DisableX64FSRedirection}
       IfFileExists $SYSDIR\drivers\dokan.sys HasPreviousVersionX64 NoPreviousVersionX64
-      ; To make EnableX64FSRedirection called in both cases, needs duplicated MessageBox code. How can I avoid this?
       HasPreviousVersionX64:
         MessageBox MB_OK "Please remove the previous version and restart your computer before running this installer."
         Abort
