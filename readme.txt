@@ -47,7 +47,7 @@ You can obtain source files from http://dokan-dev.net/en/download
 Environment
 ===========
 
-The AIXIV-modified Dokan library works reliably on 32 and 64 bit versions
+The AIXIV-modified Dokan library works reliable on 32 and 64 bit versions
 of Microsoft Windows 7, 8 and 8.1.
 It may also work on Microsoft Windows XP (only 32 bit), Vista and
 Microsoft Windows Server 2003 and 2008 but this is not guaranteed and
