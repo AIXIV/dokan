@@ -23,6 +23,15 @@ UninstPage instfiles
 
 RequestExecutionLevel admin
 
+!macro VCRedist arch
+    SetOutPath $TEMP
+    DetailPrint "Installing Visual Studio runtime for ${arch}.."
+    File vcredist_${arch}.exe
+    ExecWait '"$TEMP\vcredist_${arch}.exe" /q' $0
+    DetailPrint "VCRedist returned $0"
+    Delete $TEMP\vcredist_${arch}.exe
+!macroend
+
 !macro LicenseFiles
     File ..\readme.txt
     File ..\license.gpl.txt
@@ -43,11 +52,13 @@ RequestExecutionLevel admin
 !macroend
 
 !macro X86LibraryFiles os installdir
+    !insertmacro VCRedist x86
     SetOutPath ${installdir}
     File ..\Library\${os}Release\x86\dokan.dll
 !macroend
 
 !macro X64LibraryFiles os installdir
+    !insertmacro VCRedist x64
     ${DisableX64FSRedirection}
     SetOutPath ${installdir}
     File ..\Library\${os}Release\x64\dokan64.dll

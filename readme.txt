@@ -31,10 +31,10 @@ Licensing
 
 Dokan library contains LGPL, MIT licensed programs.
 
-- user-mode library (dokan.dll)  LGPL
-- driver (dokan.sys)             LGPL
-- control program (dokanctl.exe) MIT
-- mount service (mouter.exe)     MIT
+- user-mode library (dokan.dll, dokan64.dll)    LGPL
+- driver (dokan.sys)                            LGPL
+- control program (dokanctl.exe)                MIT
+- mount service (dokanMountService.exe)         MIT
 
 For details, please check license files.
 LGPL license.lgpl.txt

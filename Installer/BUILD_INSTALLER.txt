@@ -1,0 +1,7 @@
+The install.nsi is a pre-configured script for the Nullsoft Scriptable Install System (NSIS).
+To create an installer for your build of the Dokan library, do the following:
+1) Install NSIS.
+2) Copy the required VCRedist installers (for 32 and 64 bit) into this directory (named vcredist_x86.exe and vcredist_x64.exe).
+3) Modify licdata.rtf to your needs.
+4) Modify name and version in install.nsi (open with any text editor).
+3) Compile install.nsi using NSIS.
