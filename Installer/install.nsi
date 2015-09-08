@@ -93,13 +93,20 @@ RequestExecutionLevel admin
 !macroend
 
 !macro DokanSetup
-    ExecWait '"$INSTDIR\dokanctl.exe" /i d' $0
+    ${If} ${RunningX64}
+        ${DisableX64FSRedirection}
+    ${EndIf}
+    ExecWait '"$INSTDIR\dokanctl.exe" /i d "$SYSDIR\drivers\dokan.sys"' $0
     ${If} $0 == 0
         DetailPrint "Successfully registered driver!"
     ${Else}
         DetailPrint "Driver registration failed!"
     ${EndIf}
-    ExecWait '"$INSTDIR\dokanctl.exe" /i s' $0
+    ${If} ${RunningX64}
+        ${EnableX64FSRedirection}
+    ${EndIf}
+    
+    ExecWait '"$INSTDIR\dokanctl.exe" /i s "$INSTDIR\dokanMountService.exe"' $0
     ${If} $0 == 0
         DetailPrint "Successfully registered mounter service!"
     ${Else}
@@ -124,6 +131,7 @@ RequestExecutionLevel admin
     ${Else}
         DetailPrint "Driver removal failed!"
     ${EndIf}
+    
     ExecWait '"$INSTDIR\dokanctl.exe" /r s' $0
     ${If} $0 == 0
         DetailPrint "Successfully unregistered mounter service!"

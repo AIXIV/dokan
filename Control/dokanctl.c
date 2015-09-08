@@ -196,115 +196,102 @@ VOID RemoveNetworkProvider(VOID)
 	}
 }
 
+int InstallMode(_In_ int argc, _In_ PWCHAR argv[])
+{
+	if (argc < 4)
+	{
+		return ShowUsage();
+	}
+	switch (towlower(argv[2][0]))
+	{
+	case L'd':
+		InstallDriver(argv[3]);
+		return 0;
+	case L'm':
+	case L's':
+		InstallMounter(argv[3]);
+		return 0;
+	case L'n':
+		InstallNetworkProvider();
+		return 0;
+	default:
+		return ShowUsage();
+	}
+}
+
+int RemoveMode(_In_ int argc, _In_ PWCHAR argv[])
+{
+	switch (towlower(argv[2][0]))
+	{
+	case L'd':
+		RemoveDriver();
+		return 0;
+	case L'm':
+	case L's':
+		RemoveMounter();
+		return 0;
+	case L'a':
+		RemoveMounter();
+		RemoveDriver();
+		return 0;
+	case L'n':
+		RemoveNetworkProvider();
+		return 0;
+	default:
+		return ShowUsage();
+	}
+}
+
 int __cdecl
 wmain(_In_ int argc, _In_ PWCHAR argv[])
 {
-	WCHAR	driverFullPath[MAX_PATH];
-	WCHAR	mounterFullPath[MAX_PATH];
-	WCHAR	type;
+	WCHAR	type = towlower(argv[2][0]);
 
-	//setlocale(LC_ALL, "");
-
-	if (!GetModuleFileName(NULL, mounterFullPath, MAX_PATH))
-	{
-		fprintf(stderr, "could not retrieve the applications parent directory\n");
-		return -1;
+	if (argc < 3 || wcslen(argv[1]) != 2 || argv[1][0] != L'/') {
+		return ShowUsage();
 	}
 
-
-	// search the last "\" (remove own file name, leaves only path)
-    WCHAR* lastSlash = wcsrchr(mounterFullPath, L'\\');
-    *lastSlash = '\0';
-
-	wcscpy_s(driverFullPath, MAX_PATH, mounterFullPath);
-
-    wcscat_s(mounterFullPath, MAX_PATH, DOKAN_MOUNTSERVICE_SUBPATH);
-
-
-	//GetSystemDirectory(driverFullPath, MAX_PATH);
-    wcscat_s(driverFullPath, MAX_PATH, DOKAN_DRIVER_SUBPATH);
-
-	fwprintf(stderr, L"driver path %s\n", driverFullPath);
-	fwprintf(stderr, L"mounter path %s\n", mounterFullPath);
-
-
-	if (GetOption(argc, argv, 1) == L'v') {
+	switch (tolower(argv[1][1]))
+	{
+	case L'v':
 		fprintf(stderr, "dokanctl : %s %s\n", __DATE__, __TIME__);
 		fprintf(stderr, "Dokan version : %d\n", DokanVersion());
 		fprintf(stderr, "Dokan driver version : 0x%X\n", DokanDriverVersion());
 		return 0;
-	
-	} else if (GetOption(argc, argv, 1) == L'm') {
-		return ShowMountList();
-
-	} else if (GetOption(argc, argv, 1) == L'u' && argc == 3) {
-		return Unmount(argv[2], FALSE);
-
-	} else if (GetOption(argc, argv, 1) == L'u' &&
-				GetOption(argc, argv, 3) == L'f' && argc == 4) {
-		return Unmount(argv[2], TRUE);
-
-	} else if (argc < 3 || wcslen(argv[1]) != 2 || argv[1][0] != L'/' ) {
-		return ShowUsage();
-	}
-
-	type = towlower(argv[2][0]);
-
-	switch(towlower(argv[1][1])) {
+	case L'm':
+		ShowMountList();
+		return 0;
+	case L'u':
+		if (argc == 3)
+		{
+			return Unmount(argv[2], FALSE);
+		}
+		else if (argc == 4 && GetOption(argc, argv, 3) == L'f')
+		{
+			return Unmount(argv[2], TRUE);
+		}
+		else
+		{
+			return ShowUsage();
+		}
 	case L'i':
-		switch (type)
-		{
-		case L'd':
-			InstallDriver(driverFullPath);
-			break;
-		case L's':
-		case L'm':
-			InstallMounter(mounterFullPath);
-			break;
-		case L'a':
-			InstallDriver(driverFullPath);
-			InstallMounter(mounterFullPath);
-			break;
-		case L'n':
-			InstallNetworkProvider();
-			break;
-		}
-		break;
-
+		return InstallMode(argc, argv);
 	case L'r':
-		switch (type)
-		{
-		case L'd':
-			RemoveDriver();
-			break;
-		case L's':
-		case L'm':
-			RemoveMounter();
-			break;
-		case L'a':
-			RemoveDriver();
-			RemoveMounter();
-			break;
-		case L'n':
-			RemoveNetworkProvider();
-			break;
-		}
-		break;
+		return RemoveMode(argc, argv);
 	case L'd':
-		if (L'0' <= type && type <= L'9') {
+		if (L'0' <= type && type <= L'9')
+		{
 			ULONG mode = type - L'0';
 			if (DokanSetDebugMode(mode)) {
 				fprintf(stderr, "set debug mode ok\n");
-			} else {
+			}
+			else {
 				fprintf(stderr, "set debug mode failed\n");
 			}
 		}
-		break;
+		return 0;
 	default:
-		fprintf(stderr, "unknown option\n");
+		return ShowUsage();
 	}
-	
-
-	return 0;
 }
 
