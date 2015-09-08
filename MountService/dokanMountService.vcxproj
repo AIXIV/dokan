@@ -165,6 +165,42 @@
   <!-- The WrappedTaskItems label is used by the conversion tool to identify the location where items 
         associated with wrapped tasks will reside.-->
   <ItemGroup Label="WrappedTaskItems" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|Win32'">
+    <PostBuildEvent>
+      <Command>signtool sign /sha1 DFAD1123683CB6A00E7838C66D939DCE0FBF2BF7 $(TargetPath)
+signtool timestamp -t http://timestamp.verisign.com/scripts/timestamp.dll $(TargetPath)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|Win32'">
+    <PostBuildEvent>
+      <Command>signtool sign /sha1 DFAD1123683CB6A00E7838C66D939DCE0FBF2BF7 $(TargetPath)
+signtool timestamp -t http://timestamp.verisign.com/scripts/timestamp.dll $(TargetPath)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Release|Win32'">
+    <PostBuildEvent>
+      <Command>signtool sign /sha1 DFAD1123683CB6A00E7838C66D939DCE0FBF2BF7 $(TargetPath)
+signtool timestamp -t http://timestamp.verisign.com/scripts/timestamp.dll $(TargetPath)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'">
+    <PostBuildEvent>
+      <Command>signtool sign /sha1 DFAD1123683CB6A00E7838C66D939DCE0FBF2BF7 $(TargetPath)
+signtool timestamp -t http://timestamp.verisign.com/scripts/timestamp.dll $(TargetPath)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|x64'">
+    <PostBuildEvent>
+      <Command>signtool sign /sha1 DFAD1123683CB6A00E7838C66D939DCE0FBF2BF7 $(TargetPath)
+signtool timestamp -t http://timestamp.verisign.com/scripts/timestamp.dll $(TargetPath)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Release|x64'">
+    <PostBuildEvent>
+      <Command>signtool sign /sha1 DFAD1123683CB6A00E7838C66D939DCE0FBF2BF7 $(TargetPath)
+signtool timestamp -t http://timestamp.verisign.com/scripts/timestamp.dll $(TargetPath)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <!-- We only add items (e.g. form ClSourceFiles) that do not already exist (e.g in the ClCompile list), this avoids duplication -->
     <ClCompile Include="@(ClSourceFiles)" Exclude="@(ClCompile)" />
