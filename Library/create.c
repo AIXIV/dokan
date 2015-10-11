@@ -100,14 +100,9 @@ DispatchCreate(
 		//DbgPrint("### OpenInfo %X\n", openInfo);
 		openInfo->EventId = eventId++;
 
-		// make a directory or open
-		if (directoryRequested)
-		{
-			fileInfo.IsDirectory = TRUE;
-		}
-
+		fileInfo.IsDirectory = (UCHAR)directoryRequested;
+		
 		DWORD creationDisposition = OPEN_EXISTING;
-		fileInfo.IsDirectory = FALSE;
 		DbgPrint("   CreateDisposition %X\n", disposition);
 		switch (disposition)
 		{

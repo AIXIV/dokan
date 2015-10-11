@@ -98,14 +98,6 @@ typedef struct _DOKAN_OPERATIONS {
 		DWORD,        // FlagsAndAttributes
 		PDOKAN_FILE_INFO);
 
-	int (DOKAN_CALLBACK *OpenDirectory) (
-		LPCWSTR,				// FileName
-		PDOKAN_FILE_INFO);
-
-	int (DOKAN_CALLBACK *CreateDirectory) (
-		LPCWSTR,				// FileName
-		PDOKAN_FILE_INFO);
-
 	// When FileInfo->DeleteOnClose is true, you must delete the file in Cleanup.
 	int (DOKAN_CALLBACK *Cleanup) (
 		LPCWSTR,      // FileName
