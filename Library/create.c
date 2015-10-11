@@ -101,62 +101,45 @@ DispatchCreate(
 		openInfo->EventId = eventId++;
 
 		// make a directory or open
-		if (directoryRequested) {
+		if (directoryRequested)
+		{
 			fileInfo.IsDirectory = TRUE;
-
-			if (disposition == FILE_CREATE || disposition == FILE_OPEN_IF) {
-				if (DokanInstance->DokanOperations->CreateDirectory) {
-					status = DokanInstance->DokanOperations->CreateDirectory(
-						EventContext->Create.FileName, &fileInfo);
-				}
-			}
-			else if (disposition == FILE_OPEN) {
-				if (DokanInstance->DokanOperations->OpenDirectory) {
-					status = DokanInstance->DokanOperations->OpenDirectory(
-						EventContext->Create.FileName, &fileInfo);
-				}
-			}
-			else {
-				DbgPrint("### Create other disposition : %d\n", disposition);
-			}
-
-			// open a file
 		}
-		else {
-			DWORD creationDisposition = OPEN_EXISTING;
-			fileInfo.IsDirectory = FALSE;
-			DbgPrint("   CreateDisposition %X\n", disposition);
-			switch (disposition) {
-			case FILE_CREATE:
-				creationDisposition = CREATE_NEW;
-				break;
-			case FILE_OPEN:
-				creationDisposition = OPEN_EXISTING;
-				break;
-			case FILE_OPEN_IF:
-				creationDisposition = OPEN_ALWAYS;
-				break;
-			case FILE_OVERWRITE:
-				creationDisposition = TRUNCATE_EXISTING;
-				break;
-			case FILE_OVERWRITE_IF:
-				creationDisposition = CREATE_ALWAYS;
-				break;
-			default:
-				// TODO: should support FILE_SUPERSEDE ?
-				DbgPrint("### Create other disposition : %d\n", disposition);
-				break;
-			}
 
-			if (DokanInstance->DokanOperations->CreateFile) {
-				status = DokanInstance->DokanOperations->CreateFile(
-					EventContext->Create.FileName,
-					EventContext->Create.DesiredAccess,
-					EventContext->Create.ShareAccess,
-					creationDisposition,
-					EventContext->Create.FileAttributes,
-					&fileInfo);
-			}
+		DWORD creationDisposition = OPEN_EXISTING;
+		fileInfo.IsDirectory = FALSE;
+		DbgPrint("   CreateDisposition %X\n", disposition);
+		switch (disposition)
+		{
+		case FILE_CREATE:
+			creationDisposition = CREATE_NEW;
+			break;
+		case FILE_OPEN:
+			creationDisposition = OPEN_EXISTING;
+			break;
+		case FILE_OPEN_IF:
+			creationDisposition = OPEN_ALWAYS;
+			break;
+		case FILE_OVERWRITE:
+			creationDisposition = TRUNCATE_EXISTING;
+			break;
+		case FILE_OVERWRITE_IF:
+			creationDisposition = CREATE_ALWAYS;
+			break;
+		default:
+			// TODO: should support FILE_SUPERSEDE ?
+			DbgPrint("### Create other disposition : %d\n", disposition);
+			break;
+		}
+
+		if (DokanInstance->DokanOperations->CreateFile) {
+			status = DokanInstance->DokanOperations->CreateFile(
+				EventContext->Create.FileName,
+				EventContext->Create.DesiredAccess,
+				EventContext->Create.ShareAccess,
+				creationDisposition,
+				EventContext->Create.FileAttributes,
+				&fileInfo);
 		}
 
 		// save the information about this access in DOKAN_OPEN_INFO
