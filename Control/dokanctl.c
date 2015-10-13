@@ -245,8 +245,6 @@ int RemoveMode(_In_ int argc, _In_ PWCHAR argv[])
 int __cdecl
 wmain(_In_ int argc, _In_ PWCHAR argv[])
 {
-	WCHAR	type = towlower(argv[2][0]);
-
 	if (argc < 3 || wcslen(argv[1]) != 2 || argv[1][0] != L'/') {
 		return ShowUsage();
 	}
@@ -279,17 +277,20 @@ wmain(_In_ int argc, _In_ PWCHAR argv[])
 	case L'r':
 		return RemoveMode(argc, argv);
 	case L'd':
-		if (L'0' <= type && type <= L'9')
 		{
-			ULONG mode = type - L'0';
-			if (DokanSetDebugMode(mode)) {
-				fprintf(stderr, "set debug mode ok\n");
+			WCHAR type = towlower(argv[2][0]);
+			if (L'0' <= type && type <= L'9')
+			{
+				ULONG mode = type - L'0';
+				if (DokanSetDebugMode(mode)) {
+					fprintf(stderr, "set debug mode ok\n");
+				}
+				else {
+					fprintf(stderr, "set debug mode failed\n");
+				}
 			}
-			else {
-				fprintf(stderr, "set debug mode failed\n");
-			}
+			return 0;
 		}
-		return 0;
 	default:
 		return ShowUsage();
 	}
