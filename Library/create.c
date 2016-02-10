@@ -96,6 +96,35 @@ DispatchCreate(
 			EventContext->Create.FileAttributes |= FILE_FLAG_DELETE_ON_CLOSE;
 		}
 
+        if (options & FILE_OPEN_FOR_BACKUP_INTENT) {
+            EventContext->Create.FileAttributes |= FILE_FLAG_BACKUP_SEMANTICS;
+        }
+
+        if (options & FILE_DIRECTORY_FILE) {
+            EventContext->Create.FileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
+            directoryRequested = TRUE;
+        }
+
+        if (options & FILE_WRITE_THROUGH) {
+            EventContext->Create.FileAttributes |= FILE_FLAG_WRITE_THROUGH;
+        }
+
+        if (options & FILE_SEQUENTIAL_ONLY) {
+            EventContext->Create.FileAttributes |= FILE_FLAG_SEQUENTIAL_SCAN;
+        }
+
+        if (options & FILE_RANDOM_ACCESS) {
+            EventContext->Create.FileAttributes |= FILE_FLAG_RANDOM_ACCESS;
+        }
+
+        if (options & FILE_NO_INTERMEDIATE_BUFFERING) {
+            EventContext->Create.FileAttributes |= FILE_FLAG_NO_BUFFERING;
+        }
+
+        if (options & FILE_OPEN_REPARSE_POINT) {
+            EventContext->Create.FileAttributes |= FILE_FLAG_OPEN_REPARSE_POINT;
+        }
+
 		DbgPrint("###Create %04d\n", eventId);
 		//DbgPrint("### OpenInfo %X\n", openInfo);
 		openInfo->EventId = eventId++;
