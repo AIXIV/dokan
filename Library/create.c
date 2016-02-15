@@ -92,6 +92,10 @@ DispatchCreate(
 			//DbgPrint("FILE_NON_DIRECTORY_FILE\n");
 		}
 
+        if (!(options & FILE_NON_DIRECTORY_FILE)) {
+            EventContext->Create.FileAttributes |= FILE_FLAG_BACKUP_SEMANTICS;
+        }
+
 		if (options & FILE_DELETE_ON_CLOSE) {
 			EventContext->Create.FileAttributes |= FILE_FLAG_DELETE_ON_CLOSE;
 		}
@@ -123,6 +127,18 @@ DispatchCreate(
 
         if (options & FILE_OPEN_REPARSE_POINT) {
             EventContext->Create.FileAttributes |= FILE_FLAG_OPEN_REPARSE_POINT;
+        }
+
+        if (options & FILE_OPEN_NO_RECALL) {
+            EventContext->Create.FileAttributes |= FILE_FLAG_OPEN_NO_RECALL;
+        }
+
+        if (options & FILE_SESSION_AWARE) {
+            EventContext->Create.FileAttributes |= FILE_FLAG_SESSION_AWARE;
+        }
+
+        if (!(options & FILE_SYNCHRONOUS_IO_NONALERT)) {
+            EventContext->Create.FileAttributes |= FILE_FLAG_OVERLAPPED;
         }
 
 		DbgPrint("###Create %04d\n", eventId);
