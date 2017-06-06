@@ -141,13 +141,13 @@ RequestExecutionLevel admin
 
     DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DokanLibrary"
     
-    RMDir /r $INSTDIR
-    RMDir $INSTDIR
-    Delete $SYSDIR\dokan.dll
-    Delete $SYSDIR\drivers\dokan.sys
+    RMDir /r /REBOOTOK $INSTDIR
+    RMDir /REBOOTOK $INSTDIR
+    Delete /REBOOTOK $SYSDIR\dokan.dll
+    Delete /REBOOTOK $SYSDIR\drivers\dokan.sys
     ${DisableX64FSRedirection}
-        Delete $SYSDIR\dokan64.dll
-        Delete $SYSDIR\drivers\dokan.sys
+        Delete /REBOOTOK $SYSDIR\dokan64.dll
+        Delete /REBOOTOK $SYSDIR\drivers\dokan.sys
     ${EnableX64FSRedirection}
 !macroend
 
