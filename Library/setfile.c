@@ -317,6 +317,11 @@ DispatchSetInformation(
 				DbgPrint("  DispositionInfo status = STATUS_DIRECTORY_NOT_EMPTY\n");
 				eventInfo->Status = STATUS_DIRECTORY_NOT_EMPTY;
 			}
+      else if (status == -ERROR_DIRECTORY)
+      {
+        DbgPrint("  DispositionInfo status = STATUS_NOT_A_DIRECTORY\n");
+        eventInfo->Status = STATUS_NOT_A_DIRECTORY;
+      }
 			else if (status < 0) {
 				DbgPrint("  DispositionInfo status = STATUS_CANNOT_DELETE\n");
 				eventInfo->Status = STATUS_CANNOT_DELETE;
