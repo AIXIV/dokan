@@ -257,6 +257,7 @@ Function .onInit
     ${If} ${IsWin7}
     ${ElseIf} ${IsWin8}
     ${ElseIf} ${IsWin8.1}
+	${ElseIf} ${IsWin10}
     ;${ElseIf} ${IsWinVista}
     ${Else}
       MessageBox MB_OK "Your OS is not supported. Dokan library supports Windows 7, 8 and 8.1."
